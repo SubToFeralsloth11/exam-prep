@@ -67,17 +67,18 @@ mkdir -p "$work/out"
 "$heavy" 1800 godot --headless --path "$work/src" --export-release "Web" "$work/out/index.html"
 [ -s "$work/out/index.pck" ] && [ -s "$work/out/index.wasm" ] || { echo "export produced no game files" >&2; exit 1; }
 
-# GitHub rejects files over 100 MB, so a big game pack is split into 90 MB parts and the page
-# stitches them back together when Godot asks for index.pck.
+# GitHub rejects files over 100 MB, so a big game pack is split into 90 MB parts; the loader
+# (tools/game_loader.js) stitches them back together and caches the game files in the browser.
 pck=$work/out/index.pck
+parts=0
 if [ "$(stat -f %z "$pck")" -gt 94371840 ]; then
 	split -b 90m -a 3 -d "$pck" "$pck."
 	rm "$pck"
 	parts=$(find "$work/out" -name 'index.pck.[0-9][0-9][0-9]' | wc -l | tr -d ' ')
-	loader="<script>(()=>{const n=$parts,f=window.fetch.bind(window);window.fetch=(u,o)=>{if(typeof u==='string'\&\&u.split('?')[0].endsWith('index.pck'))return Promise.all(Array.from({length:n},(_,i)=>f('index.pck.'+String(i).padStart(3,'0')).then(r=>{if(!r.ok)throw new Error('missing pack part '+i);return r.blob();}))).then(b=>{const all=new Blob(b);return new Response(all,{headers:{'Content-Length':String(all.size)}});});return f(u,o);};})();</script>"
-	sed -i '' "s#<head>#<head>$loader#" "$work/out/index.html"
-	grep -q "const n=$parts" "$work/out/index.html" || { echo "could not add the pack loader to index.html" >&2; exit 1; }
 fi
+loader=$(sed -e "s/__PARTS__/$parts/" -e "s/__REPO__/$repo/" -e "s/__VERSION__/$(git -C "$src" rev-parse --short "$ref")-$(date +%s)/" "$(dirname "$0")/game_loader.js" | grep -v '^ *//')
+node -e 'const fs=require("fs"),f=process.argv[1],h=fs.readFileSync(f,"utf8");if(!h.includes("<head>"))process.exit(1);fs.writeFileSync(f,h.replace("<head>",()=>"<head><script>"+process.argv[2]+"</script>"))' "$work/out/index.html" "$loader" ||
+	{ echo "could not add the game loader to index.html" >&2; exit 1; }
 big=$(find "$work/out" -type f -size +95M)
 [ -z "$big" ] || { echo "files too big for GitHub (100 MB limit):" >&2; ls -lh $big >&2; exit 1; }
 
