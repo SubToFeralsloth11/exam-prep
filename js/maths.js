@@ -28,9 +28,9 @@ export const TOPICS = {
   ])(),
   '3I Increasing & decreasing by a %': () => pick([
     () => { const p = pick([10, 15, 20, 25, 30, 40]), x = R(4, 40) * 10, m = r2(1 - p / 100), a = r2(x * m);
-      return { q: `Decrease ${money(x)} by ${p}%`, a, steps: [`Taking off ${p}% leaves 100% − ${p}% = ${100 - p}% of the price.`, `${100 - p}% as a decimal is ${m}. That's the multiplier.`, `${x} × ${m} = ${a}`] }; },
+      return { q: `Decrease ${money(x)} by ${p}%`, a, steps: [`"Decrease by ${p}%" means take ${p}% of ${x} OFF ${x}.`, `Amount taken off: ${p}% of ${x} = ${p / 100} × ${x} = ${r2(x * p / 100)}.`, `(Shortcut for next time: you keep 100% − ${p}% = ${100 - p}% = ${m}, so ${x} × ${m} gives the same answer.)`, `${x} − ${r2(x * p / 100)} = ${a}`] }; },
     () => { const p = pick([5, 10, 12, 15, 20, 50]), x = R(4, 40) * 10, m = r2(1 + p / 100), a = r2(x * m);
-      return { q: `Increase ${x} by ${p}%`, a, steps: [`Adding ${p}% gives 100% + ${p}% = ${100 + p}%.`, `${100 + p}% as a decimal is ${m}. That's the multiplier.`, `${x} × ${m} = ${a}`] }; },
+      return { q: `Increase ${x} by ${p}%`, a, steps: [`"Increase by ${p}%" means ADD ${p}% of ${x} on to ${x}.`, `Amount added: ${p}% of ${x} = ${p / 100} × ${x} = ${r2(x * p / 100)}.`, `(Shortcut for next time: 100% + ${p}% = ${100 + p}% = ${m}, so ${x} × ${m} gives the same answer.)`, `${x} + ${r2(x * p / 100)} = ${a}`] }; },
     () => { const x = R(5, 60) * 10, a = r2(x * 1.1);
       return { q: `A ${money(x)} item has 10% GST added. Final price?`, a, steps: [`GST is 10%, so the final price is 100% + 10% = 110% of the price.`, `110% as a decimal is 1.1.`, `${x} × 1.1 = ${a}`] }; },
     () => { const p = pick([15, 20, 25, 30]), x = R(4, 30) * 10, a = r2(x * p / 100);

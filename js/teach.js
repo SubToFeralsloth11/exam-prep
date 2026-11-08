@@ -11,7 +11,8 @@ export const LESSONS = {
   ],
   '3I Increasing & decreasing by a %': [
     { t: 'The multiplier trick', s: ['Start with 100% (the whole price).', 'Increase by 20% → 100% + 20% = 120% → multiply by 1.2.', 'Decrease by 20% → 100% − 20% = 80% → multiply by 0.8.'] },
-    { t: 'Example: a decrease', s: ['Decrease $50 by 30%.', '100% − 30% = 70% is left.', '70% as a decimal is 0.7.', '50 × 0.7 = $35.'] },
+    { t: 'Example: a decrease', s: ['Decrease $50 by 30%. That means: take 30% of $50 OFF $50.', 'First find the amount taken off: 30% of $50 = 0.3 × 50 = $15.', 'Take it off: $50 − $15 = $35. So the answer is $35, not $15.', 'Shortcut: you keep 100% − 30% = 70%, and 70% = 0.7. 50 × 0.7 = $35, the same answer in one step.'] },
+    { t: 'Example: an increase', s: ['Increase $40 by 25%. That means: ADD 25% of $40 on to $40.', 'Amount added: 25% of $40 = 0.25 × 40 = $10.', 'Add it on: $40 + $10 = $50.', 'Shortcut: 100% + 25% = 125% = 1.25. 40 × 1.25 = $50, the same answer.'] },
     { t: 'GST', s: ['GST in Australia is 10%.', 'Adding GST: 100% + 10% = 110% → × 1.1.', '$40 + GST = 40 × 1.1 = $44.'] },
     { t: '"How much do I save?"', s: ['The saving is just the percentage of the price.', '25% off $60: you save 0.25 × 60 = $15.', 'You pay 60 − 15 = $45. Read the question: save or pay?'] },
   ],
