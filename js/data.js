@@ -759,7 +759,7 @@ export const READINGS = [
     "die achte Klasse = Year 8"
    ],
    [
-    "What is the date of Maike's actual (real) birthday? (e.g. 12 June)",
+    "What is the date of Maike's actual (real) birthday? (write it like 3 May)",
     [
      "12 june",
      "june 12",
@@ -771,7 +771,7 @@ export const READINGS = [
     "am zwölften Juni = 12 June"
    ],
    [
-    "On what date is Maike celebrating her birthday this year? (e.g. 12 June)",
+    "On what date is Maike celebrating her birthday this year? (write it like 3 May)",
     [
      "26 june",
      "june 26",
@@ -811,7 +811,7 @@ export const READINGS = [
     "Liebe Saskia"
    ],
    [
-    "What date is Ina's party? (e.g. 23 October)",
+    "What date is Ina's party? (write it like 3 May)",
     [
      "23 october",
      "october 23",
@@ -832,7 +832,7 @@ export const READINGS = [
     "Am Samstag"
    ],
    [
-    "What time does Ina's party start? (24h, e.g. 16:00)",
+    "What time does Ina's party start? (24-hour time, like 09:00)",
     [
      "16:00",
      "4pm",
@@ -843,7 +843,7 @@ export const READINGS = [
     "sechzehn Uhr = 16:00"
    ],
    [
-    "What time does Ina's party finish? (24h, e.g. 22:00)",
+    "What time does Ina's party finish? (24-hour time, like 09:00)",
     [
      "22:00",
      "10pm",
@@ -973,7 +973,8 @@ export const READINGS = [
 export const SURVEY_QUESTIONS = ['Hours of sleep per day', 'Money in bank account ($)', 'Number of siblings'];
 export const SURVEY = {"8A":[[8,0,4],[9,600,1],[7,1000,0],[0,187,2],[8,451,0],[8,935,1],[10,1,2],[0,30,2],[7,1000,1],[8,1800,2],[9,500,3],[8,800,1],[8,400,1],[8,760,1],[3,300,1],[10,0,1],[8,0,2],[11,0,1]],"8B":[[8,120,1],[9,0,2],[8,90,1],[9,2000,1],[8,200,1],[8,20,1],[9,190,2],[8,100,2],[9,3000,1],[9,100,0],[8,1200,1],[7,22,4],[9,3000,0],[6,128,5],[9,0,1],[8,102,1],[8,95,2],[9,100,1],[8,274,1],[9,100,1],[7,12,0],[8,1,2],[7,100,1]],"8C":[[6,154,1],[6,300,1],[7,170,2],[9,3000,2],[7,1500,1],[8,30,1],[10,500,2],[8,1000,1],[6,1000,2]],"8E":[[5,700,1],[8,230,1],[7,571,1],[9,110,2],[8,50,1],[7,0.88,0],[9,0,1],[7,1000,1],[7,1000,2],[8,1000,3],[9,2000,1],[11,1000,1],[8,20,3],[10,4000,1],[12,360,2],[9,1200,1],[8,0,1],[8,0,6],[8,1000,2],[6,1000,2],[8,2200,5],[9,50,1]],"8F":[[8,34,2],[9,33,1],[9,1200,2],[8,0,2],[9,533,1],[9,564,1],[2,67,1],[8,10,1],[9,9,2],[8,300,1],[7,0,2],[9,35,2],[5,400,1],[8,131,2],[6,0,2],[8,500,1],[8,2100,2],[8,50,3],[9,300,1],[9,200,1],[12,100,3]],"8G":[[9,300,1],[6,100,1],[8,588,1],[7,0,2],[9,400,1],[9,600,3],[9,600,2],[6,100,2],[9,400,2],[6,0.04,2],[8,12,1],[9,200,1],[11,500,3],[8,20,1],[7,0,1],[9,0,4],[8,250,2],[11,2900,4],[9,10,1],[9,315,2],[9,1,4]],"8I":[[8,2000,3],[8,2200,2],[7,3000,2],[9,200,1],[8,80,4],[8,100,2],[10,132,2],[8,1000,2],[8,2250,0],[8,20,3],[6,100,1],[8,800,2],[10,100,1],[8,20,2],[10,110,1],[11,4000,2],[10,1200,2],[9,10,1],[8,300,0],[9,0,2],[9,33,1],[1,67,1],[7,67,1]],"8J":[[9,110,2],[7,900,1],[1,2000,2],[6,100,2],[8,10,2],[8,150,2],[6,0,2],[7,800,1],[10,20,1],[9,110,2],[9,3000,3],[9,5000,5],[10,3000,1],[9,7000,0],[9,102,2],[8,1000,1],[6,0.48,1],[7,1280,1]],"8K":[[7,30,1],[9,1200,1],[6,100,6],[8,0,2],[7,1000,0],[6,1000,0],[7,1190,1],[8,670,1],[10,1.98,4],[7,130,1],[9,9,2],[5,200,4],[8,100,3],[7,300,3],[12,300,4],[8,5000,0],[6,2000,2],[10,99,2],[8,2000,1]],"8L":[[10,330,1],[8,64,4],[7,0,1],[8,1,4],[8,1,1],[7,1000,2],[7,0,3],[9,45.44,1],[6,20,1],[8,2500,2],[8,187,1],[5,1259,3],[9,670,1],[8,200,0],[7,300,2],[9,50,2],[7,50,2],[6,100,3],[9,450,2],[0,4000,1],[8,1000,1],[0,40,7]]};
 
-// My Godot games, bought with coins earned by studying. Web builds live under play/ on each
+// My Godot games, bought with coins earned by studying. Web builds live under play/ on a gh-pages
+// branch (private games use a public <game>-play repo holding only the build); rebuild one with
 // Godot games already published on GitHub Pages; bought with coins earned by studying.
 export const GAMES = [
   { id: 'starhop', name: 'Starhop', url: 'https://subtoferalsloth11.github.io/starhop/' },

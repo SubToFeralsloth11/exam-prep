@@ -52,14 +52,14 @@ export const DRILLS = {
     const d = R(1, 31), m = R(0, 11);
     return pick([
       { q: `Write in German: on the ${EN_ORD(d)} of ${MONTHS_EN[m]}`, a: [amDatum(d, m)], steps: [`"On the …" = "am".`, `Turn ${d} into an ordinal (1st, 2nd…). ${ordinalWhy(d)}`, `After "am" the ordinal ends in -en: ${ordinal(d)}en.`, `${MONTHS_EN[m]} = ${MONTHS[m]}.`, `Together: ${amDatum(d, m)}`] },
-      { q: `What date is "${amDatum(d, m)}"? (e.g. 3 May or 3/5)`, a: [`${d} ${MONTHS_EN[m]}`.toLowerCase(), `${MONTHS_EN[m]} ${d}`.toLowerCase(), `${EN_ORD(d)} ${MONTHS_EN[m]}`.toLowerCase(), `${EN_ORD(d)} of ${MONTHS_EN[m]}`.toLowerCase(), `${d}/${m + 1}`, `${d}.${m + 1}`, `${d}.${String(m + 1).padStart(2, '0')}`], steps: [`"am" = "on the". Drop the -en ending: ${ordinal(d)}en → ${ordinal(d)}.`, `${ordinalWhy(d)} So it's the ${EN_ORD(d)}.`, `${MONTHS[m]} = ${MONTHS_EN[m]}.`, `Answer: ${d} ${MONTHS_EN[m]}`] },
-      { q: `"Ich habe ___ Geburtstag." = "My birthday is ___." Fill the gap (___) with the date ${d}. ${MONTHS[m]} in German, e.g. "am vierten Mai".`, a: [amDatum(d, m)], steps: [`Birthdays use "am" + ordinal + -en + month.`, `${ordinalWhy(d)} With -en: ${ordinal(d)}en.`, `Ich habe ${amDatum(d, m)} Geburtstag.`] },
+      { q: `What date is "${amDatum(d, m)}"? (write it like ${d === 3 && m === 4 ? '9 July or 9/7' : '3 May or 3/5'})`, a: [`${d} ${MONTHS_EN[m]}`.toLowerCase(), `${MONTHS_EN[m]} ${d}`.toLowerCase(), `${EN_ORD(d)} ${MONTHS_EN[m]}`.toLowerCase(), `${EN_ORD(d)} of ${MONTHS_EN[m]}`.toLowerCase(), `${d}/${m + 1}`, `${d}.${m + 1}`, `${d}.${String(m + 1).padStart(2, '0')}`], steps: [`"am" = "on the". Drop the -en ending: ${ordinal(d)}en → ${ordinal(d)}.`, `${ordinalWhy(d)} So it's the ${EN_ORD(d)}.`, `${MONTHS[m]} = ${MONTHS_EN[m]}.`, `Answer: ${d} ${MONTHS_EN[m]}`] },
+      { q: `"Ich habe ___ Geburtstag." = "My birthday is ___." Fill the gap (___) with the date ${d}. ${MONTHS[m]} in German, written like ${d === 4 && m === 4 ? '"am neunten Juli"' : '"am vierten Mai"'}.`, a: [amDatum(d, m)], steps: [`Birthdays use "am" + ordinal + -en + month.`, `${ordinalWhy(d)} With -en: ${ordinal(d)}en.`, `Ich habe ${amDatum(d, m)} Geburtstag.`] },
     ]);
   },
   'Ordinalzahlen (1–31)': () => {
     const n = R(1, 31), o = n % 10, t = Math.floor(n / 10);
     return pick([
-      { q: `How do you say "the ${EN_ORD(n)}" in German? Type just the ordinal word, e.g. 4th → vierte`, a: [`${ordinal(n)}e`], steps: [ordinalWhy(n), `Ordinals after der/die/das end in -e: ${ordinal(n)}e.`] },
+      { q: `How do you say "the ${EN_ORD(n)}" in German? Type just the ordinal word, like ${n === 4 ? '5th → fünfte' : '4th → vierte'}`, a: [`${ordinal(n)}e`], steps: [ordinalWhy(n), `Ordinals after der/die/das end in -e: ${ordinal(n)}e.`] },
       { q: `Write the number ${n} in German`, a: [zahl(n)], steps: n > 20 && o ? [`German says the ones BEFORE the tens, joined by "und".`, `${n} = ${o} and ${t * 10}: ${o === 1 ? 'ein' : zahl(o)} + und + ${zahl(t * 10)}.`, zahl(n)] : [`${n} is a word you just learn: ${zahl(n)}.`] },
     ]);
   },
@@ -87,7 +87,7 @@ export const DRILLS = {
     return pick([
       { q: `What time is "${uhrzeit(h, m)}"? (h:mm)`, a: [digital, `${h}.${String(m).padStart(2, '0')}`, `${h24}:${String(m).padStart(2, '0')}`], steps: why },
       { q: `Say ${digital} the informal German way`, a: [uhrzeit(h, m).toLowerCase()], steps: [m === 0 ? 'On the hour: number + Uhr.' : m === 30 ? `:30 → "halb" + the NEXT hour (${next}).` : m === 15 ? ':15 → "Viertel nach" + this hour.' : m === 45 ? `:45 → "Viertel vor" + the NEXT hour (${next}).` : m < 30 ? `${m} minutes past → "${zahl(m)} nach" + this hour.` : `${60 - m} minutes before ${next} → "${zahl(60 - m)} vor" + the next hour.`, `= ${uhrzeit(h, m)}`] },
-      { q: `${h24} Uhr in 12-hour time? (e.g. 8pm)`, a: [`${h}pm`, `${h} pm`, `${h}:00pm`, `${h}:00 pm`], steps: [`Over 12 means afternoon/evening: subtract 12.`, `${h24} − 12 = ${h} → ${h}pm`] },
+      { q: `${h24} Uhr in 12-hour time? (write it like ${h === 8 ? '9pm' : '8pm'})`, a: [`${h}pm`, `${h} pm`, `${h}:00pm`, `${h}:00 pm`], steps: [`Over 12 means afternoon/evening: subtract 12.`, `${h24} − 12 = ${h} → ${h}pm`] },
     ]);
   },
   'Jahreszeiten (seasons)': () => pick([
@@ -122,11 +122,13 @@ function lev(a, b) {
   return prev[b.length];
 }
 const ARTICLE = /^(der|die|das|den|dem) /;
-// A spelling slip: 1 letter off for words of 5–8 letters, 2 for longer. Short words and a wrong
-// der/die/das never count, because those are the thing being tested.
+// A spelling slip: 1 letter off for words of 5–8 letters, 2 for longer. Short words, a wrong
+// der/die/das and a different number never count, because those are the thing being tested.
 function slip(input, answer) {
   const i = flat(input), a = flat(answer);
   if (a.length < 5 || i.match(ARTICLE)?.[1] !== a.match(ARTICLE)?.[1]) return false;
+  // A different number is a different answer (10th June is not 12th June), never a typo.
+  if (String(i.match(/\d+/g)) !== String(a.match(/\d+/g))) return false;
   return lev(i, a) <= (a.length <= 8 ? 1 : 2);
 }
 
