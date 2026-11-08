@@ -975,15 +975,13 @@ export const SURVEY = {"8A":[[8,0,4],[9,600,1],[7,1000,0],[0,187,2],[8,451,0],[8
 
 // My Godot games, bought with coins earned by studying. Web builds live under play/ on a gh-pages
 // branch (private games use a public <game>-play repo holding only the build); rebuild one with
-// Godot games already published on GitHub Pages; bought with coins earned by studying.
+// tools/publish_game.sh.
 export const GAMES = [
-  { id: 'starhop', name: 'Starhop', url: 'https://subtoferalsloth11.github.io/starhop/' },
-  { id: 'orbit', name: 'Orbit Snap', url: 'https://subtoferalsloth11.github.io/orbit-snap/' },
-  { id: 'glow', name: 'Glow Swarm', url: 'https://subtoferalsloth11.github.io/glow-swarm/' },
-  { id: 'slime', name: 'Slime Idle', url: 'https://subtoferalsloth11.github.io/slime-idle/' },
-  { id: 'barn', name: "Barry's Barn", url: 'https://subtoferalsloth11.github.io/barrys-barn/' },
-  { id: 'squad', name: 'Squad Arcade', url: 'https://subtoferalsloth11.github.io/squad-arcade/' },
-  { id: 'timbum', name: 'Timbum', url: 'https://subtoferalsloth11.github.io/timbum/' },
+  { id: 'timbum', name: 'Timbum', url: 'https://subtoferalsloth11.github.io/timbum/play/' },
+  { id: 'corner', name: 'Corner to Super', url: 'https://subtoferalsloth11.github.io/corner-to-super-play/play/' },
+  { id: 'car', name: 'Car Explosion', url: 'https://subtoferalsloth11.github.io/car-explosion-play/play/' },
+  { id: 'dl3', name: 'Drift Legends 3', url: 'https://subtoferalsloth11.github.io/drift-legends-3-play/play/' },
+  { id: 'pilots', name: 'Any Pilots On Board?', url: 'https://subtoferalsloth11.github.io/any-pilots-on-board/play/' },
 ];
 
 // From the PSMT task sheet ("8 Maths Assignment (Data) Task Sheet 2026.pdf").
