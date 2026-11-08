@@ -829,12 +829,31 @@ function arcade() {
 
 function launch(game) {
   const wrap = document.createElement('div'); wrap.className = 'arcade-frame';
-  wrap.innerHTML = `<header><span>🎮 ${esc(game.name)}</span><span id="left"></span><button class="btn alt" id="stop">Stop & save time</button></header><iframe src="${game.url}" allow="autoplay; fullscreen; gamepad; cross-origin-isolated" allowfullscreen></iframe>`;
+  wrap.innerHTML = `<header><span>🎮 ${esc(game.name)}</span><span id="left"></span><button class="btn alt" id="stop">Stop & save time</button></header><div class="game-loading" id="loading"><div class="spinner"></div><p><b>Loading ${esc(game.name)}…</b></p><p class="small muted" id="load-msg">Your play timer is paused until the game is ready.</p></div><iframe src="${game.url}" allow="autoplay; fullscreen; gamepad; cross-origin-isolated" allowfullscreen></iframe>`;
   document.body.appendChild(wrap);
+  const frame = $('iframe', wrap), loading = $('#loading', wrap);
+  let pageLoaded = false, ready = false, waited = 0;
+  frame.onload = () => { pageLoaded = true; };
+  const fmt = () => `${Math.floor(S.playSec / 60)}:${String(S.playSec % 60).padStart(2, '0')}`;
+  // Godot web exports hide their #status splash once the engine has started.
+  // The games share this site's origin, so we can look inside; if not, the page load counts as ready.
+  const gameStarted = () => {
+    if (!pageLoaded) return false;
+    try { const st = frame.contentDocument.getElementById('status'); return !st || getComputedStyle(st).display === 'none' || st.style.visibility === 'hidden'; } catch { return true; }
+  };
   const close = () => { clearInterval(tick); wrap.remove(); save(); hud(); arcade(); };
   const tick = setInterval(() => {
+    if (!ready) {
+      waited++;
+      if (gameStarted()) { ready = true; loading.remove(); }
+      else {
+        $('#left', wrap).textContent = `⏸ ${fmt()} left (paused while loading)`;
+        if (waited >= 6) $('#load-msg', wrap).textContent = `Still working, this one is taking a while (${waited}s). Big games can take up to a minute. Your timer stays paused.`;
+        return;
+      }
+    }
     S.playSec = Math.max(0, S.playSec - 1);
-    $('#left', wrap).textContent = `⏱ ${Math.floor(S.playSec / 60)}:${String(S.playSec % 60).padStart(2, '0')} left`;
+    $('#left', wrap).textContent = `⏱ ${fmt()} left`;
     if (S.playSec % 10 === 0) save();
     if (!S.playSec) { close(); toast('⏰ Play time is up. Back to study to earn more!'); }
   }, 1000);

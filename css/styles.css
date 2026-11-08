@@ -57,6 +57,9 @@ h1 { font-size: 28px; margin: 0 0 6px; } h2 { margin: 28px 0 10px; font-size: 20
 .arcade-frame { position: fixed; inset: 0; z-index: 20; background: #000; display: flex; flex-direction: column; }
 .arcade-frame header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #111; font-weight: 800; }
 .arcade-frame iframe { flex: 1; border: 0; width: 100%; }
+.game-loading { position: absolute; inset: 52px 0 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: #000; z-index: 1; text-align: center; padding: 20px; }
+.spinner { width: 48px; height: 48px; border: 5px solid #343a63; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 td input { font: inherit; width: 90px; padding: 6px 8px; border-radius: 8px; border: 2px solid #343a63; background: #0b0e1a; color: var(--fg); }
 .locked { filter: grayscale(1); opacity: .6; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--accent); padding: 12px 20px; border-radius: 12px; font-weight: 700; z-index: 30; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
