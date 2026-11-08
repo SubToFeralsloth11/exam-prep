@@ -1,11 +1,12 @@
 import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES } from './data.js';
 import { TOPICS, checkMaths, stats } from './maths.js';
 import { DRILLS, checkGerman, variants } from './german.js';
+import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
 
 // ---------- state ----------
 const KEY = 'examquest.v1';
 const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Brisbane' });
-const fresh = () => ({ xp: 0, coins: 0, streak: { last: '', n: 0 }, day: {}, mastery: {}, topic: {}, badges: [], bosses: {}, playSec: 0, total: 0, bestCombo: 0, psmt: {}, claimed: {} });
+const fresh = () => ({ xp: 0, coins: 0, streak: { last: '', n: 0 }, day: {}, mastery: {}, topic: {}, badges: [], bosses: {}, playSec: 0, total: 0, bestCombo: 0, psmt: {}, claimed: {}, lessons: {} });
 let S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}'));
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 function day() {
@@ -84,47 +85,141 @@ function checkBadges() {
 }
 
 // ---------- question engine ----------
-// A question: { id, prompt, passage?, kind: 'text'|'mc', choices?, check(input) -> 'right'|'accent'|'wrong', answer, steps, keys?, subject }
+// A question: { id, prompt, passage?, dict?, kind: 'text'|'mc', choices?, check(input) -> 'right'|'accent'|'wrong', answer,
+//   steps (array of small steps, or a sentence string), teach?() -> steps, retype?, keys?, subject, topic?, similar?() -> question }
+// Steps are strings, or { html } for pre-built markup.
 let session = null;
+const tools = { calc: false, work: false, expr: '' };
+const stepList = (q) => (q.teach ? q.teach() : Array.isArray(q.steps) ? q.steps : String(q.steps || '').split(/(?<=[.!?])\s+|;\s+/)).filter(Boolean);
+const stepHtml = (x) => (typeof x === 'string' ? esc(x) : x.html);
+const dictTable = (rows) => `<table class="dict">${rows.map(([de, en]) => `<tr><td><b>${esc(de)}</b></td><td>${esc(en)}</td></tr>`).join('')}</table>`;
+
 function play({ title, next, limit = 20, boss = null, onEnd }) {
-  session = { title, next, limit, boss, onEnd, n: 0, right: 0, combo: 0, q: null, locked: false, hp: boss ? boss.hp : 0, hearts: boss ? 3 : 0, start: Date.now(), wrongs: [] };
+  session = { title, next, limit, boss, onEnd, n: 0, right: 0, combo: 0, q: null, locked: false, hp: boss ? boss.hp : 0, hearts: boss ? 3 : 0, start: Date.now(), wrongs: [], pending: null, advance: null };
+  // Enter checks the answer, then steps through the explanation, then moves on.
+  document.onkeydown = (e) => {
+    const s = session; if (e.key !== 'Enter' || !s) return;
+    if (e.target.closest?.('#toolbox, .retype')) return;
+    if (!s.locked) { if (e.target.id === 'ans') { e.preventDefault(); answer(e.target.value); } return; }
+    e.preventDefault(); s.advance?.();
+  };
   ask();
 }
 
 function ask() {
   const s = session;
-  if (s.n >= s.limit || (s.boss && (s.hp <= 0 || s.hearts <= 0))) return finish();
-  s.q = s.next(s);
+  if (!s.pending && (s.n >= s.limit || (s.boss && (s.hp <= 0 || s.hearts <= 0)))) return finish();
+  s.q = s.pending || s.next(s); s.pending = null;
   if (!s.q) return finish();
-  s.locked = false;
-  const q = s.q;
+  s.locked = false; s.advance = null; s.hint = 0;
+  const q = s.q, maths = q.subject === 'maths';
+  const terms = maths ? mathsTerms(q.prompt) : [];
+  const hints = stepList(q).length > 1;
   view.innerHTML = `
     <div class="play">
       <div class="row" style="justify-content:space-between">
         <a href="#" id="quit" class="muted">✕ ${esc(s.title)}</a>
-        <span class="muted">${s.n + 1} / ${s.limit} · <span class="combo">${s.combo >= 3 ? `🔥 ${s.combo}× combo` : ''}</span></span>
+        <span class="muted">${s.n + 1} / ${Math.max(s.limit, s.n + 1)} · <span class="combo">${s.combo >= 3 ? `🔥 ${s.combo}× combo` : ''}</span></span>
       </div>
-      <div class="bar" style="margin-top:8px"><i style="width:${(s.n / s.limit) * 100}%"></i></div>
+      <div class="bar" style="margin-top:8px"><i style="width:${Math.min(1, s.n / s.limit) * 100}%"></i></div>
       ${s.boss ? `<div class="boss" id="boss">${s.boss.icon}</div><div class="hp"><i style="width:${(s.hp / s.boss.hp) * 100}%"></i></div><p class="center">${'❤️'.repeat(s.hearts)}${'🖤'.repeat(3 - s.hearts)} <span class="muted" id="timer"></span></p>` : ''}
-      ${q.passage ? `<details ${s.n === 0 ? 'open' : ''}><summary class="muted">Text</summary><div class="passage">${esc(q.passage)}</div></details>` : ''}
+      ${q.passage ? `<details open><summary class="muted">The letter</summary><div class="passage">${esc(q.passage)}</div></details>` : ''}
       <div class="q">${esc(q.prompt)}</div>
+      <div class="row tools">
+        ${terms.length || q.dict ? '<button class="tool" id="t-means">❓ What does this mean?</button>' : ''}
+        ${hints ? '<button class="tool" id="t-hint">💡 Hint</button>' : ''}
+        ${maths ? `<button class="tool ${tools.calc ? 'on' : ''}" id="t-calc">🧮 Calculator</button><button class="tool ${tools.work ? 'on' : ''}" id="t-work">📝 Working out</button>` : ''}
+        ${LESSONS[q.topic] && !s.boss ? '<button class="tool" id="t-teach">📖 Teach me this</button>' : ''}
+      </div>
+      <div id="helpbox"></div>
+      <div id="toolbox"></div>
       ${q.kind === 'mc'
-        ? `<div class="choices">${q.choices.map((c, i) => `<button data-i="${i}">${esc(c)}</button>`).join('')}</div>`
+        ? `<div class="choices">${q.choices.map((c, i) => `<button data-i="${i}">${esc(c)}</button>`).join('')}</div>
+           <div class="row" style="margin-top:10px"><button class="btn alt" id="idk">I don't know</button></div>`
         : `<input type="text" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer, Enter to check">
            ${q.keys ? `<div class="keys">${['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'].map((k) => `<button data-k="${k}">${k}</button>`).join('')}</div>` : ''}
            <div class="row"><button class="btn" id="check">Check</button><button class="btn alt" id="idk">I don't know</button></div>`}
-      <div class="feedback" id="fb"><span class="muted">${s.boss ? 'Every right answer hits the boss. 3 wrong and you lose.' : 'Right answers earn XP and 🪙. Combos multiply coins.'}</span></div>
+      <div class="feedback" id="fb"><span class="muted">${s.boss ? 'Every right answer hits the boss. 3 wrong and you lose.' : 'Stuck? Press "I don\'t know" and I\'ll show you how, one step at a time.'}</span></div>
     </div>`;
   $('#quit').onclick = (e) => { e.preventDefault(); finish(); };
+  $('#idk').onclick = () => !s.locked && answer('');
   if (q.kind === 'mc') view.querySelectorAll('.choices button').forEach((b) => (b.onclick = () => answer(q.choices[b.dataset.i], b)));
   else {
     const inp = $('#ans'); inp.focus();
-    inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); s.locked ? ask() : answer(inp.value); } };
-    $('#check').onclick = () => (s.locked ? ask() : answer(inp.value));
-    $('#idk').onclick = () => !s.locked && answer('');
+    $('#check').onclick = () => (s.locked ? s.advance?.() : answer(inp.value));
     view.querySelectorAll('.keys button').forEach((b) => (b.onclick = () => { const p = inp.selectionStart; inp.value = inp.value.slice(0, p) + b.dataset.k + inp.value.slice(inp.selectionEnd); inp.focus(); inp.setSelectionRange(p + 1, p + 1); }));
   }
+  const help = $('#helpbox');
+  $('#t-means') && ($('#t-means').onclick = () => {
+    help.innerHTML = `<div class="card help"><b>📖 Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
+  });
+  $('#t-hint') && ($('#t-hint').onclick = () => {
+    const steps = stepList(q); if (s.locked || s.hint >= steps.length - 1) return;
+    q.hinted = true;
+    if (!help.querySelector('.hints')) help.innerHTML = '<div class="card help"><b>💡 Hints</b> <span class="small muted">(a hinted answer earns 1 🪙)</span><ol class="steps hints"></ol></div>';
+    help.querySelector('.hints').insertAdjacentHTML('beforeend', `<li>${stepHtml(steps[s.hint++])}</li>`);
+    if (s.hint >= steps.length - 1) $('#t-hint').disabled = true;
+  });
+  $('#t-teach') && ($('#t-teach').onclick = () => { session = null; lesson(q.topic); });
+  if (maths) {
+    $('#t-calc').onclick = () => { tools.calc = !tools.calc; $('#t-calc').classList.toggle('on', tools.calc); drawTools(); };
+    $('#t-work').onclick = () => { tools.work = !tools.work; $('#t-work').classList.toggle('on', tools.work); drawTools(); };
+    drawTools();
+  }
   if (s.boss) tickTimer();
+}
+
+// ---------- calculator & working-out pad ----------
+// Safe arithmetic: numbers, + − × ÷ ^ %, brackets. No eval.
+function calculate(text) {
+  const src = text.replace(/×|x|\*/g, '*').replace(/÷|\//g, '/').replace(/−|–/g, '-').replace(/,/g, '').replace(/\s+/g, '');
+  let i = 0;
+  const expr = () => { let v = term(); while (src[i] === '+' || src[i] === '-') v = src[i++] === '+' ? v + term() : v - term(); return v; };
+  const term = () => { let v = power(); while (src[i] === '*' || src[i] === '/' || src[i] === '(') { if (src[i] === '(') v *= power(); else v = src[i++] === '*' ? v * power() : v / power(); } return v; };
+  const power = () => { const v = unary(); if (src[i] === '^') { i++; return v ** power(); } return v; };
+  const unary = () => { if (src[i] === '-') { i++; return -unary(); } if (src[i] === '+') { i++; return unary(); } let v = atom(); while (src[i] === '%') { i++; v /= 100; } return v; };
+  const atom = () => {
+    if (src[i] === '(') { i++; const v = expr(); if (src[i] !== ')') throw new Error('missing )'); i++; return v; }
+    const m = src.slice(i).match(/^\d*\.?\d+/); if (!m) throw new Error('number expected');
+    i += m[0].length; return Number(m[0]);
+  };
+  const v = expr();
+  if (i < src.length || !Number.isFinite(v)) throw new Error('bad input');
+  return Math.round(v * 1e10) / 1e10;
+}
+
+function drawTools() {
+  const box = $('#toolbox'); if (!box) return;
+  box.innerHTML = `${tools.calc ? `<div class="card calc"><input type="text" id="calc-in" placeholder="e.g. 0.15 × 80" value="${esc(tools.expr)}" autocomplete="off"><div class="calc-out" id="calc-out">&nbsp;</div>
+      <div class="keypad">${['7', '8', '9', '÷', '(', '4', '5', '6', '×', ')', '1', '2', '3', '−', '^', '0', '.', '%', '+', '⌫', 'C', '='].map((k) => `<button data-c="${k}" class="${k === '=' ? 'eq' : ''}">${k}</button>`).join('')}</div>
+      <button class="btn alt" id="calc-use" style="margin-top:8px">Put result in my answer</button></div>` : ''}
+    ${tools.work ? `<div class="card work"><b>📝 Working out</b> <span class="small muted">type or draw; nothing here is marked</span>
+      <textarea id="work-txt" rows="4" placeholder="Write your steps here…"></textarea>
+      <canvas id="work-pad" height="220"></canvas><div class="row"><button class="btn alt" id="work-clear">Clear drawing</button></div></div>` : ''}`;
+  if (tools.calc) {
+    const inp = $('#calc-in'), out = $('#calc-out');
+    const run = () => { try { const v = calculate(inp.value); out.textContent = `= ${v}`; tools.last = v; } catch { out.textContent = inp.value.trim() ? 'Check the sum (brackets, signs)' : '\u00a0'; tools.last = null; } };
+    inp.oninput = () => { tools.expr = inp.value; };
+    inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); run(); } };
+    box.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => {
+      const k = b.dataset.c;
+      if (k === '=') return run();
+      inp.value = k === 'C' ? '' : k === '⌫' ? inp.value.slice(0, -1) : inp.value + k;
+      tools.expr = inp.value; if (k === 'C') out.innerHTML = '&nbsp;';
+    }));
+    $('#calc-use').onclick = () => { run(); const a = $('#ans'); if (a && tools.last != null && !session?.locked) { a.value = tools.last; a.focus(); } };
+  }
+  if (tools.work) {
+    const c = $('#work-pad'), g = c.getContext('2d');
+    c.width = c.clientWidth || 600;
+    g.lineWidth = 2.5; g.lineCap = 'round'; g.strokeStyle = '#eef0ff';
+    let down = false;
+    const at = (e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * (c.width / r.width), (e.clientY - r.top) * (c.height / r.height)]; };
+    c.onpointerdown = (e) => { down = true; c.setPointerCapture(e.pointerId); g.beginPath(); g.moveTo(...at(e)); };
+    c.onpointermove = (e) => { if (down) { g.lineTo(...at(e)); g.stroke(); } };
+    c.onpointerup = c.onpointercancel = () => (down = false);
+    $('#work-clear').onclick = () => g.clearRect(0, 0, c.width, c.height);
+  }
 }
 
 function tickTimer() {
@@ -143,28 +238,64 @@ function answer(input, btn) {
   if (res === 'right' || res === 'accent') {
     s.right++; s.combo++; S.total++; d.correct++; d[q.subject]++;
     d.combo = Math.max(d.combo, s.combo); S.bestCombo = Math.max(S.bestCombo, s.combo);
-    const mult = s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1;
-    reward(res === 'right' ? 10 : 6, 2 * mult);
+    const mult = s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1, coins = q.hinted ? 1 : 2 * mult;
+    reward(res === 'right' ? 10 : 6, coins);
     if (q.id) S.mastery[q.id] = Math.min(5, (S.mastery[q.id] || 0) + 1);
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; t.right++; }
     if (s.boss) { s.hp--; const b = $('#boss'); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 150); }
     fb.innerHTML = res === 'right'
-      ? `<b class="done">✔ Correct!</b> +${2 * mult} 🪙 ${mult > 1 ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${q.steps ? `<div class="muted small">${esc(q.steps)}</div>` : ''}`
+      ? `<b class="done">✔ Correct!</b> +${coins} 🪙 ${mult > 1 && !q.hinted ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${stepList(q).length && !q.teach ? `<div class="muted small">${stepList(q).map(stepHtml).join(' → ')}</div>` : ''}`
       : `<b style="color:var(--warn)">≈ Almost — check your umlauts/ß:</b> ${esc(q.answer)}`;
+    const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.style.marginTop = '10px'; nb.onclick = ask;
+    fb.appendChild(document.createElement('br')); fb.appendChild(nb); nb.focus();
+    s.advance = ask;
     bumpStreak();
   } else {
     s.combo = 0; s.wrongs.push(q);
     if (q.id) S.mastery[q.id] = 0;
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; }
     if (s.boss) s.hearts--;
-    fb.innerHTML = `<b style="color:var(--bad)">✘ Answer:</b> ${esc(q.answer)}${q.steps ? `<div class="muted small">${esc(q.steps)}</div>` : ''}`;
+    walkthrough(fb, q, input.trim() ? '✘ Not quite. Let\'s work it out together, one step at a time.' : 'No worries. Here\'s how to do it, one step at a time.');
   }
-  if (btn) { btn.classList.add(res === 'wrong' ? 'wrong' : 'right'); view.querySelectorAll('.choices button').forEach((b) => { if (b.textContent === String(q.answer)) b.classList.add('right'); b.disabled = true; }); }
+  if (btn) btn.classList.add(res === 'wrong' ? 'wrong' : 'right');
+  view.querySelectorAll('.choices button').forEach((b) => { if (b.textContent === String(q.answer) && res !== 'wrong') b.classList.add('right'); b.disabled = true; });
   const inp = $('#ans'); if (inp) { inp.classList.add(res); inp.readOnly = true; }
-  const nextBtn = document.createElement('button'); nextBtn.className = 'btn'; nextBtn.textContent = 'Next →'; nextBtn.style.marginTop = '10px'; nextBtn.onclick = ask; fb.appendChild(document.createElement('br')); fb.appendChild(nextBtn);
-  if (q.kind === 'mc') nextBtn.focus(); else inp?.focus();
+  const hb = $('#t-hint'); if (hb) hb.disabled = true;
   save(); checkQuests(); checkBadges(); hud();
-  if (q.kind === 'mc' || res !== 'wrong') document.onkeydown = (e) => { if (e.key === 'Enter' && s.locked && q.kind === 'mc') { document.onkeydown = null; ask(); } };
+}
+
+// Shows the explanation one step per click (or Enter), then the answer, then what to do next.
+function walkthrough(fb, q, intro) {
+  const s = session, steps = [...stepList(q).map(stepHtml), `<b>Answer: ${esc(q.answer)}</b>`];
+  let i = 0;
+  fb.innerHTML = `<b style="color:${intro.startsWith('✘') ? 'var(--bad)' : 'var(--accent2)'}">${esc(intro)}</b><ol class="steps" id="steps"></ol><div class="row" id="wbtns"></div>`;
+  const ol = $('#steps', fb), btns = $('#wbtns', fb);
+  const end = () => {
+    if (q.kind === 'mc') view.querySelectorAll('.choices button').forEach((b) => { if (b.textContent === String(q.answer)) b.classList.add('right'); });
+    btns.innerHTML = `${q.retype ? `<div class="retype"><span class="small muted">Type it once to lock it in:</span> <input type="text" id="retype" autocomplete="off" spellcheck="false"> <span id="retype-ok"></span></div>` : ''}
+      ${q.similar && !s.boss ? '<button class="btn alt" id="w-sim">🔁 Try a similar one</button>' : ''}
+      ${LESSONS[q.topic] && !s.boss ? '<button class="btn alt" id="w-teach">📖 Teach me this topic</button>' : ''}
+      <button class="btn" id="w-next">Next question →</button>`;
+    s.advance = ask;
+    $('#w-next', fb).onclick = ask;
+    $('#w-sim', fb) && ($('#w-sim', fb).onclick = () => { s.pending = q.similar(); ask(); });
+    $('#w-teach', fb) && ($('#w-teach', fb).onclick = () => { session = null; lesson(q.topic); });
+    const rt = $('#retype', fb);
+    if (rt) {
+      rt.focus();
+      rt.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (rt.readOnly) ask(); } };
+      rt.oninput = () => { if (checkGerman(rt.value, [q.retype]) !== 'wrong') { rt.readOnly = true; rt.classList.add('right'); $('#retype-ok', fb).textContent = '✔ Locked in. Press Enter for the next one.'; } };
+    } else $('#w-next', fb).focus();
+  };
+  const more = () => {
+    ol.insertAdjacentHTML('beforeend', `<li>${steps[i++]}</li>`);
+    ol.lastElementChild.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (i >= steps.length) return end();
+    btns.innerHTML = `<button class="btn" id="w-step">Next step → <span class="small">(${i}/${steps.length})</span></button>`;
+    $('#w-step', fb).onclick = more; $('#w-step', fb).focus();
+  };
+  s.advance = () => (i < steps.length ? more() : ask());
+  more();
 }
 
 function finish() {
@@ -181,11 +312,14 @@ function finish() {
   } else if (s.n >= 10 && pct >= 90) { reward(30, 15, '🎉 90%+ round bonus: +15 🪙'); }
   save(); checkQuests(); checkBadges();
   const wrongs = [...new Map(s.wrongs.map((q) => [q.prompt, q])).values()];
+  const weakTopics = [...new Set(wrongs.map((q) => q.topic).filter((t) => LESSONS[t]))];
   view.innerHTML = `<div class="play">
     ${extra}<h1>${s.right} / ${s.n} correct (${pct}%)</h1>
     ${wrongs.length ? `<h2>Fix these</h2><table>${wrongs.map((q) => `<tr><td>${esc(q.prompt)}</td><td><b>${esc(q.answer)}</b></td></tr>`).join('')}</table>` : '<p>No mistakes. 🔥</p>'}
+    ${weakTopics.length ? `<h2>Learn these again</h2><div class="row">${weakTopics.map((t) => `<button class="btn alt" data-lesson="${esc(t)}">📖 ${esc(t)}</button>`).join('')}</div>` : ''}
     <div class="row" style="margin-top:20px"><button class="btn" id="again">Go again</button><a class="btn alt" href="#home">Home</a><a class="btn gold" href="#arcade">Arcade 🪙 ${S.coins}</a></div></div>`;
   $('#again').onclick = () => s.onEnd ? s.onEnd() : play({ title: s.title, next: s.next, limit: s.limit, boss: s.boss });
+  view.querySelectorAll('[data-lesson]').forEach((b) => (b.onclick = () => lesson(b.dataset.lesson)));
   hud();
 }
 
@@ -195,8 +329,10 @@ const shuffle = (xs) => xs.map((x) => [Math.random(), x]).sort((a, b) => a[0] - 
 function vocabQ(list, dir, word) {
   const [de, en] = word;
   const id = `v:${dir}:${de}`;
-  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `${de}`, kind: 'text', answer: en, check: (i) => checkGerman(i, variants(en)), steps: '' };
-  return { id, subject: 'german', topic: list, prompt: `${en}`, kind: 'text', keys: true, answer: de, check: (i) => checkGerman(i, [de]), steps: /^(der|die|das) /.test(de) ? 'Learn the article with the noun.' : '' };
+  const art = de.match(/^(der|die|das) /)?.[1];
+  const tip = art ? `It's a "${art}" word. Learn der/die/das together with the noun: ${de}.` : '';
+  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', answer: en, retype: en, check: (i) => checkGerman(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
+  return { id, subject: 'german', topic: list, prompt: `How do you say "${en}" in German?`, kind: 'text', keys: true, answer: de, retype: de, check: (i) => checkGerman(i, [de]), steps: tip, teach: () => [`"${en}" in German is "${de}".`, tip].filter(Boolean) };
 }
 
 // Leitner-style queue: weakest words first, wrong words come back 3 questions later.
@@ -213,21 +349,34 @@ function vocabNext(list, dir) {
 }
 
 function drillNext(name) {
-  return () => { const d = DRILLS[name](); return { subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkGerman(i, d.a), steps: d.steps }; };
+  const make = () => { const d = DRILLS[name](); return { subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkGerman(i, d.a), steps: d.steps, similar: make }; };
+  return make;
+}
+
+// The piece of the letter a reading question is about: the one sharing the most words with
+// the explanation and accepted answers.
+function findChunk(chunks, q) {
+  const words = `${q[2]} ${q[1].join(' ')}`.toLowerCase().match(/[a-zäöüß0-9]{3,}/g) || [];
+  let best = chunks[0], top = -1;
+  for (const c of chunks) { const t = `${c[0]} ${c[1]}`.toLowerCase(); const n = words.filter((w) => t.includes(w)).length; if (n > top) { top = n; best = c; } }
+  return best;
 }
 
 function readingNext(r) {
-  const order = shuffle(r.qs);
+  const order = shuffle(r.qs), chunks = READ_ALONG[r.title] || [];
+  const dict = [...new Map(chunks.flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
   return (s) => {
     const q = order[s.n % order.length];
-    return { subject: 'german', topic: 'Reading', passage: r.text, prompt: q[0], kind: 'text', answer: q[1][0], steps: q[2],
+    const chunk = chunks.length ? findChunk(chunks, q) : null;
+    return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', answer: q[1][0], steps: q[2],
+      teach: chunk ? () => [{ html: `Find the part of the letter this is about:<div class="quote">${esc(chunk[0])}</div>` }, { html: `Mini dictionary for that part:${dictTable(chunk[2])}` }, `In English: "${chunk[1]}"`, q[2]] : null,
       check: (i) => { const c = i.toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim(); if (!c) return 'wrong'; return q[1].some((a) => c === a || (a.length > 3 && c.includes(a))) ? 'right' : checkGerman(i, q[1]); } };
   };
 }
 
 function mathsQ(topic) {
   const g = TOPICS[topic]();
-  return { subject: 'maths', topic, prompt: g.q, kind: g.choices ? 'mc' : 'text', choices: g.choices, answer: g.a, steps: g.steps,
+  return { subject: 'maths', topic, prompt: g.q, kind: g.choices ? 'mc' : 'text', choices: g.choices, answer: g.a, steps: g.steps, similar: () => mathsQ(topic),
     check: (i) => (g.choices ? (i === g.a ? 'right' : 'wrong') : checkMaths(i, g.a) ? 'right' : 'wrong') };
 }
 const mixedMaths = (topics) => () => mathsQ(topics[Math.floor(Math.random() * topics.length)]);
@@ -271,6 +420,7 @@ function home() {
 
     <h2>Study next</h2>
     <div class="grid">
+      <div class="card click" data-go="teach"><h3>📖 No idea where to start?</h3><p class="muted small">Lessons that go one small step at a time, before any questions.</p><button class="btn">Teach me</button></div>
       <div class="card click" data-go="ger"><h3>🇩🇪 German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
       <div class="card click" data-go="mat"><h3>📐 Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
       <div class="card click" data-go="psmt"><h3>📊 PSMT due Fri 13 Nov</h3><p class="muted small">Check your own survey calculations before you write the report.</p><button class="btn">Open PSMT lab</button></div>
@@ -282,6 +432,7 @@ function home() {
   view.querySelector('[data-go=ger]').onclick = () => play({ title: 'Mixed German', next: germanMix(), limit: 20 });
   view.querySelector('[data-go=mat]').onclick = () => play({ title: 'Mixed Maths', next: mixedMaths(Object.keys(TOPICS)), limit: 20 });
   view.querySelector('[data-go=psmt]').onclick = () => (location.hash = '#psmt');
+  view.querySelector('[data-go=teach]').onclick = () => (location.hash = '#teach');
   $('#reset').onclick = () => { if (confirm('Wipe all XP, coins and progress?')) { S = fresh(); save(); route(); } };
 }
 
@@ -290,22 +441,32 @@ function mastery(list) {
   return [m, w.length];
 }
 
+const taught = (key) => !!S.lessons[key];
+const tick = (key) => (taught(key) ? '✅ ' : '');
+
 function german() {
   view.innerHTML = `
     <h1>🇩🇪 German – Unit 8: Was feiert man in Deutschland?</h1>
-    <p class="muted">The exam is <b>reading comprehension</b> ("locating and responding"): read a German text such as an invitation or letter, and answer questions in English or in German sentences. Practise all three parts below.</p>
-    <h2>1 · Word lists (exact Education Perfect + Stile lists)</h2>
+    <p class="muted">The exam is <b>reading comprehension</b>: read a German letter (like an invitation) and answer questions about it. New to something? Do it in this order: <b>📖 Teach</b> → <b>🃏 Learn</b> → <b>✏️ Test</b>.</p>
+    <h2>1 · Reading a letter (the actual exam)</h2>
+    <div class="grid">
+      <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><button class="btn alt" id="tips">📖 Teach</button></div>
+      ${READINGS.map((r, i) => `<div class="card"><h3>${tick(`read:${r.title}`)}📄 ${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p>
+        <div class="row"><button class="btn alt" data-ra="${i}">📖 Read it with me</button><button class="btn" data-r="${i}">✏️ Answer questions</button></div></div>`).join('')}
+    </div>
+    <h2>2 · Word lists (exact Education Perfect + Stile lists)</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => { const [m, n] = mastery(l); return `
-      <div class="card"><h3>${esc(l)}</h3><div class="bar"><i style="width:${(m / n) * 100}%"></i></div><p class="small muted">${m}/${n} mastered both ways</p>
-      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="learn">Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">DE → EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">EN → DE</button></div></div>`; }).join('')}</div>
-    <h2>2 · Skill drills (generated, never run out)</h2>
-    <div class="grid">${Object.keys(DRILLS).map((d) => { const t = S.topic[d]; return `<div class="card click" data-d="${esc(d)}"><h3>${esc(d)}</h3><p class="small muted">${t ? `${t.right}/${t.seen} right` : 'Not started'}</p></div>`; }).join('')}</div>
-    <h2>3 · Reading comprehension (exam style)</h2>
-    <div class="grid">${READINGS.map((r, i) => `<div class="card click" data-r="${i}"><h3>📄 ${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p></div>`).join('')}</div>
-    <p class="small muted">Tip from your teacher's Week 5 lesson: <i>halb acht</i> = 7:30 (half TO eight). Dates after <i>am</i> end in -en: am einunddreißigsten März.</p>`;
-  view.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => b.dataset.m === 'learn' ? learn(b.dataset.l) : play({ title: `${b.dataset.l} (${b.dataset.m})`, next: vocabNext(b.dataset.l, b.dataset.m), limit: Math.min(25, GERMAN[b.dataset.l].length + 5) })));
-  view.querySelectorAll('[data-d]').forEach((c) => (c.onclick = () => play({ title: c.dataset.d, next: drillNext(c.dataset.d), limit: 15 })));
-  view.querySelectorAll('[data-r]').forEach((c) => { const r = READINGS[c.dataset.r]; c.onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length }); });
+      <div class="card"><h3>${tick(`words:${l}`)}${esc(l)}</h3><div class="bar"><i style="width:${(m / n) * 100}%"></i></div><p class="small muted">${m}/${n} mastered both ways</p>
+      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="teach">📖 Teach</button><button class="btn alt" data-l="${esc(l)}" data-m="learn">🃏 Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">✏️ DE → EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">✏️ EN → DE</button></div></div>`; }).join('')}</div>
+    <h2>3 · Skills (dates, numbers, years, time, seasons)</h2>
+    <div class="grid">${Object.keys(DRILLS).map((d) => { const t = S.topic[d]; return `<div class="card"><h3>${tick(d)}${esc(d)}</h3><p class="small muted">${t ? `${t.right}/${t.seen} right` : 'Not started'}</p>
+      <div class="row"><button class="btn alt" data-teach="${esc(d)}">📖 Teach</button><button class="btn" data-d="${esc(d)}">✏️ Practise</button></div></div>`; }).join('')}</div>`;
+  $('#tips').onclick = () => readingTips();
+  view.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => { const l = b.dataset.l, m = b.dataset.m; if (m === 'teach') return teachWords(l); if (m === 'learn') return learn(l); play({ title: `${l} (${m})`, next: vocabNext(l, m), limit: Math.min(25, GERMAN[l].length + 5) }); }));
+  view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
+  view.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => play({ title: b.dataset.d, next: drillNext(b.dataset.d), limit: 15 })));
+  view.querySelectorAll('[data-ra]').forEach((b) => (b.onclick = () => readAlong(Number(b.dataset.ra))));
+  view.querySelectorAll('[data-r]').forEach((b) => { const r = READINGS[b.dataset.r]; b.onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length }); });
 }
 
 // Flashcards: flip, then rate yourself. Small XP, no coins (coins are for recall, not peeking).
@@ -328,14 +489,156 @@ function maths() {
   const t4 = Object.keys(TOPICS);
   view.innerHTML = `
     <h1>📐 Maths – Term 4 (Cambridge Essential 8)</h1>
-    <p class="muted">These are exactly the sections on Mr Hives' Term 4 planner: percentages 3H–3K, ratios 6A–6B, rates 6D–6G and statistics 8B–8F. Exam: Week 8 (Wed 25 Nov).</p>
+    <p class="muted">These are exactly the sections on Mr Hives' Term 4 planner: percentages 3H–3K, ratios 6A–6B, rates 6D–6G and statistics 8B–8F. Exam: Week 8 (Wed 25 Nov).
+      No idea where to start? Press <b>📖 Teach</b> on a topic: it explains one small step at a time, then gives you 5 practice questions. Every question has a 🧮 calculator, a 📝 working-out pad and a ❓ button that explains the words.</p>
     <div class="row"><button class="btn" id="mix">Mixed exam round (20)</button><button class="btn alt" id="stat">Statistics only (PSMT prep)</button></div>
     <div class="grid" style="margin-top:16px">${t4.map((n) => { const t = S.topic[n]; const p = t ? Math.round((t.right / t.seen) * 100) : 0; return `
-      <div class="card click" data-t="${esc(n)}"><h3>${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'}</p></div>`; }).join('')}</div>
+      <div class="card"><h3>${tick(n)}${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'}</p>
+      <div class="row"><button class="btn alt" data-teach="${esc(n)}">📖 Teach</button><button class="btn" data-t="${esc(n)}">✏️ Practise</button></div></div>`; }).join('')}</div>
     <p class="small muted">Answers: round to 2 decimal places when asked. Ratios as 3:2. Money without the $ is fine.</p>`;
   $('#mix').onclick = () => play({ title: 'Term 4 mix', next: mixedMaths(t4), limit: 20 });
   $('#stat').onclick = () => play({ title: 'Statistics', next: mixedMaths(t4.filter((n) => n.startsWith('8'))), limit: 20 });
-  view.querySelectorAll('[data-t]').forEach((c) => (c.onclick = () => play({ title: c.dataset.t, next: () => mathsQ(c.dataset.t), limit: 12 })));
+  view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
+  view.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => play({ title: b.dataset.t, next: () => mathsQ(b.dataset.t), limit: 12 })));
+}
+
+// ---------- teaching ----------
+function markTaught(key) {
+  if (taught(key)) return;
+  S.lessons[key] = 1; reward(20, 5, '📖 Lesson done! +5 🪙');
+}
+
+// Steps through cards one line at a time. Enter / → goes forward, ← goes back.
+function runCards(title, cards, onDone) {
+  let c = 0, l = 0;
+  const fwd = () => { if (l + 1 < cards[c].s.length) l++; else if (c + 1 < cards.length) { c++; l = 0; } else { document.onkeydown = null; return onDone(); } draw(); };
+  const back = () => { if (l > 0) l--; else if (c > 0) { c--; l = cards[c].s.length - 1; } draw(); };
+  const draw = () => {
+    const card = cards[c], last = l + 1 >= card.s.length;
+    view.innerHTML = `<div class="play"><a href="#" id="quit" class="muted">✕ ${esc(title)}</a>
+      <p class="muted small" style="margin-top:10px">Part ${c + 1} of ${cards.length}</p><div class="bar"><i style="width:${((c + (l + 1) / card.s.length) / cards.length) * 100}%"></i></div>
+      <div class="card lesson"><h2>${esc(card.t)}</h2><ol class="steps">${card.s.slice(0, l + 1).map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+        ${card.html || ''}</div>
+      <div class="row"><button class="btn alt" id="back" ${c || l ? '' : 'disabled'}>← Back</button><button class="btn" id="fwd">${!last ? 'Next step →' : c + 1 < cards.length ? 'Next part →' : 'Done ✔'}</button></div>
+      <p class="small muted">Tip: press Enter or → to go on, ← to go back.</p></div>`;
+    $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
+    $('#back').onclick = back; $('#fwd').onclick = fwd; $('#fwd').focus();
+  };
+  document.onkeydown = (e) => { if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); fwd(); } else if (e.key === 'ArrowLeft') back(); };
+  draw();
+}
+
+function practiceFor(key) {
+  if (TOPICS[key]) return () => mathsQ(key);
+  if (DRILLS[key]) return drillNext(key);
+  return null;
+}
+
+function lesson(key) {
+  runCards(`📖 ${key}`, LESSONS[key], () => {
+    markTaught(key);
+    const next = practiceFor(key);
+    view.innerHTML = `<div class="play center"><h1>📖 Lesson done</h1><p class="muted">Now try 5 questions on <b>${esc(key)}</b>. If you get one wrong or press "I don't know", it's explained step by step.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="go">✏️ Your turn (5 questions)</button><button class="btn alt" id="again">📖 Read it again</button></div></div>`;
+    $('#go').onclick = () => play({ title: key, next, limit: 5 });
+    $('#again').onclick = () => lesson(key);
+  });
+}
+
+function readingTips() {
+  runCards('📖 How to read a German letter', READING_TIPS, () => { markTaught('read:tips'); german(); });
+}
+
+// One piece of the letter at a time, with a mini dictionary and the meaning on request.
+function readAlong(ri) {
+  const r = READINGS[ri], chunks = READ_ALONG[r.title];
+  let i = 0, shown = false;
+  const fwd = () => { if (!shown) { shown = true; return draw(); } if (i + 1 < chunks.length) { i++; shown = false; return draw(); } done(); };
+  const back = () => { if (shown) shown = false; else if (i > 0) { i--; shown = true; } draw(); };
+  const draw = () => {
+    const [de, en, words] = chunks[i];
+    view.innerHTML = `<div class="play"><a href="#" id="quit" class="muted">✕ ${esc(r.title)}</a>
+      <p class="muted small" style="margin-top:10px">Piece ${i + 1} of ${chunks.length}. Read the German, use the mini dictionary, try to work out the meaning, then check.</p>
+      <div class="bar"><i style="width:${((i + (shown ? 1 : 0.5)) / chunks.length) * 100}%"></i></div>
+      ${i ? `<div class="passage faded">${chunks.slice(Math.max(0, i - 2), i).map((c) => esc(c[0])).join(' ')}</div>` : ''}
+      <div class="passage now">${esc(de)}</div>
+      <div class="card help"><b>📖 Mini dictionary</b>${dictTable(words)}</div>
+      ${shown ? `<div class="card"><b>In English:</b> ${esc(en)}</div>` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn alt" id="back" ${i || shown ? '' : 'disabled'}>← Back</button><button class="btn" id="fwd">${!shown ? 'Show me what it means' : i + 1 < chunks.length ? 'Next piece →' : 'Done ✔'}</button></div></div>`;
+    $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
+    $('#back').onclick = back; $('#fwd').onclick = fwd; $('#fwd').focus();
+  };
+  const done = () => {
+    document.onkeydown = null; markTaught(`read:${r.title}`);
+    view.innerHTML = `<div class="play center"><h1>📄 You read the whole letter</h1><p class="muted">Now answer the questions. The mini dictionary is still there (❓ button), and wrong answers point you to the right sentence.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="go">✏️ Answer the questions</button><button class="btn alt" id="again">📖 Read it again</button></div></div>`;
+    $('#go').onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length });
+    $('#again').onclick = () => readAlong(ri);
+  };
+  document.onkeydown = (e) => { if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); fwd(); } else if (e.key === 'ArrowLeft') back(); };
+  draw();
+}
+
+// Teaches a word list five words at a time: meet each word, then a quick check on those five.
+function teachWords(list) {
+  const all = GERMAN[list], groups = [];
+  for (let k = 0; k < all.length; k += 5) groups.push(all.slice(k, k + 5));
+  let g = 0, w = 0, queue = null;
+  const header = () => `<a href="#" id="quit" class="muted">✕ ${esc(list)}</a><p class="muted small" style="margin-top:10px">Group ${g + 1} of ${groups.length}</p><div class="bar"><i style="width:${((g + (queue ? 0.5 : (w + 1) / groups[g].length / 2)) / groups.length) * 100}%"></i></div>`;
+  const bind = () => { $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); }; };
+  const meet = () => {
+    const grp = groups[g], [de, en] = grp[w], art = de.match(/^(der|die|das) /)?.[1];
+    view.innerHTML = `<div class="play">${header()}
+      <div class="flash"><div class="face" style="cursor:default">${esc(de)}<div class="small muted" style="font-weight:400;margin-top:8px">${esc(en)}</div></div></div>
+      ${art ? `<p class="small muted center">"${art}" word: learn the der/die/das with it.</p>` : ''}
+      ${w ? `<div class="card help"><b>📖 This group so far</b>${dictTable(grp.slice(0, w))}</div>` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn" id="fwd">${w + 1 < grp.length ? 'Next word →' : 'Quick check on these words →'}</button></div></div>`;
+    bind(); $('#fwd').onclick = fwdMeet; $('#fwd').focus();
+  };
+  const fwdMeet = () => { if (w + 1 < groups[g].length) { w++; meet(); } else { queue = shuffle(groups[g]); check(); } };
+  const check = () => {
+    if (!queue.length) { queue = null; if (g + 1 < groups.length) { g++; w = 0; return meet(); } return done(); }
+    const [de, en] = queue[0];
+    const opts = shuffle([en, ...shuffle(all.filter((x) => x[1] !== en)).slice(0, 3).map((x) => x[1])]);
+    view.innerHTML = `<div class="play">${header()}<div class="q">What does "${esc(de)}" mean?</div>
+      <div class="choices">${opts.map((o) => `<button>${esc(o)}</button>`).join('')}</div><div class="feedback" id="fb"></div></div>`;
+    bind();
+    view.querySelectorAll('.choices button').forEach((b) => (b.onclick = () => {
+      const ok = b.textContent === en;
+      view.querySelectorAll('.choices button').forEach((x) => { x.disabled = true; if (x.textContent === en) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      queue.shift(); if (!ok) queue.push([de, en]);
+      $('#fb').innerHTML = ok ? '<b class="done">✔ Yes!</b> ' : `<b style="color:var(--bad)">✘ "${esc(de)}" means "${esc(en)}".</b> It'll come back in a moment. `;
+      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.onclick = check; $('#fb').appendChild(nb); nb.focus();
+    }));
+  };
+  const done = () => {
+    document.onkeydown = null; markTaught(`words:${list}`);
+    view.innerHTML = `<div class="play center"><h1>📖 You've met every word in ${esc(list)}</h1><p class="muted">Next: 🃏 Learn them with flashcards, then ✏️ test yourself for coins.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="learn">🃏 Learn (flashcards)</button><button class="btn alt" id="test">✏️ Test DE → EN</button></div></div>`;
+    $('#learn').onclick = () => learn(list);
+    $('#test').onclick = () => play({ title: `${list} (de-en)`, next: vocabNext(list, 'de-en'), limit: Math.min(25, all.length + 5) });
+  };
+  meet();
+}
+
+// Every lesson in order, for "I have no idea where to start".
+function teach() {
+  const item = (key, label, attrs) => `<div class="card click" ${attrs}><h3>${taught(key) ? '✅' : '📖'} ${esc(label)}</h3><p class="small muted">${taught(key) ? 'Done. Click to go over it again.' : 'Not done yet'}</p></div>`;
+  view.innerHTML = `<h1>📖 Teach me</h1>
+    <p class="muted">Start here if you have no idea. Every lesson goes one small step at a time, then you practise. Order: <b>📖 Teach</b> → <b>🃏 Learn</b> → <b>✏️ Test</b>.</p>
+    <h2>🇩🇪 German: reading a letter</h2>
+    <div class="grid">${item('read:tips', 'How to read a German letter', 'data-tips')}${READINGS.map((r, i) => item(`read:${r.title}`, `Read with me: ${r.title}`, `data-ra="${i}"`)).join('')}</div>
+    <h2>🇩🇪 German: skills</h2>
+    <div class="grid">${Object.keys(DRILLS).map((d) => item(d, d, `data-teach="${esc(d)}"`)).join('')}</div>
+    <h2>🇩🇪 German: word lists</h2>
+    <div class="grid">${Object.keys(GERMAN).map((l) => item(`words:${l}`, l, `data-words="${esc(l)}"`)).join('')}</div>
+    <h2>📐 Maths</h2>
+    <div class="grid">${Object.keys(TOPICS).map((t) => item(t, t, `data-teach="${esc(t)}"`)).join('')}</div>`;
+  $('[data-tips]').onclick = readingTips;
+  view.querySelectorAll('[data-ra]').forEach((c) => (c.onclick = () => readAlong(Number(c.dataset.ra))));
+  view.querySelectorAll('[data-teach]').forEach((c) => (c.onclick = () => lesson(c.dataset.teach)));
+  view.querySelectorAll('[data-words]').forEach((c) => (c.onclick = () => teachWords(c.dataset.words)));
 }
 
 // ---------- PSMT lab ----------
@@ -356,6 +659,15 @@ function histogram(xs, q) {
   return `<svg class="hist" viewBox="0 0 ${W} ${H + 30}">${counts.map((c, i) => `<rect x="${30 + i * bw}" y="${H - (c / max) * (H - 10)}" width="${bw - 2}" height="${(c / max) * (H - 10)}" fill="#7c5cff"/><text x="${30 + i * bw + bw / 2}" y="${H + 14}" fill="#9aa0c3" font-size="10" text-anchor="middle">${w === 1 ? lo + i * w : `${lo + i * w}–${lo + (i + 1) * w - 1}`}</text>${c ? `<text x="${30 + i * bw + bw / 2}" y="${H - (c / max) * (H - 10) - 3}" fill="#eef0ff" font-size="10" text-anchor="middle">${c}</text>` : ''}`).join('')}</svg>`;
 }
 
+let dataView = 'sorted';
+function dataBlock(xs) {
+  if (dataView === 'freq') {
+    const f = new Map(); stats.sorted(xs).forEach((x) => f.set(x, (f.get(x) || 0) + 1));
+    return `<div class="databox"><table><tr><th>Value</th><th>Frequency</th></tr>${[...f].map(([v, n]) => `<tr><td>${v}</td><td>${n}</td></tr>`).join('')}<tr><th>Total</th><th>${xs.length}</th></tr></table></div>`;
+  }
+  return `<div class="databox nums">${(dataView === 'sorted' ? stats.sorted(xs) : xs).join(', ')}</div>`;
+}
+
 function psmt() {
   const qi = Number(location.hash.split('/')[1] || 0);
   const st = (S.psmt[qi] ||= { cells: {}, shapes: {}, done: false });
@@ -367,8 +679,12 @@ function psmt() {
     <h1>📊 PSMT lab – ${esc(PSMT.question)}</h1>
     <p class="muted">Due <b>Fri 13 Nov</b> on DayMap. ${esc(PSMT.rules)}</p>
     <div class="row">${SURVEY_QUESTIONS.map((q, i) => `<a class="btn ${i === qi ? '' : 'alt'}" href="#psmt/${i}">${S.psmt[i]?.done ? '✅ ' : ''}Q${i + 1}: ${esc(q)}</a>`).join('')}</div>
+    <h2>The data</h2>
+    <p class="small muted">Your class survey answers for "${esc(SURVEY_QUESTIONS[qi])}" (from "8E Data collection (Hives)(1-196).xlsx"). Each number is one student.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn ${dataView === 'raw' ? '' : 'alt'}" data-view="raw">As collected</button><button class="btn ${dataView === 'sorted' ? '' : 'alt'}" data-view="sorted">In order (smallest → biggest)</button><button class="btn ${dataView === 'freq' ? '' : 'alt'}" data-view="freq">Frequency table</button></div>
+    <div class="grid">${GROUPS.map(([g], gi) => `<div class="card"><h3>${g}</h3><p class="small muted">${truth[gi].n} students</p>${dataBlock(truth[gi].xs)}</div>`).join('')}</div>
     <h2>Step 1 · Calculate it yourself (+5 🪙 per correct cell)</h2>
-    <p class="small muted">Use your spreadsheet "8E Data collection (Hives)(1-196).xlsx" in OneDrive → Yr 8 → Term 4. Type your answer and press Enter. For more than one mode, type them separated by commas.</p>
+    <p class="small muted">Use the data above (or your spreadsheet). Type your answer and press Enter. For more than one mode, type them separated by commas. Stuck? The 📖 Teach lessons for 8D and 8E show how.</p>
     <div class="card" style="overflow-x:auto"><table><tr><th></th>${fields.map(([, l]) => `<th>${l}</th>`).join('')}</tr>
       ${GROUPS.map(([g], gi) => `<tr><th>${g}</th>${fields.map(([f]) => { const k = `${gi}:${f}`; return `<td><input type="text" data-k="${k}" value="${esc(st.cells[k] ? (f === 'mode' ? truth[gi].mode.join(', ') : truth[gi][f]) : '')}" ${st.cells[k] ? 'readonly style="border-color:var(--good)"' : ''} size="7"></td>`; }).join('')}</tr>`).join('')}</table>
       <p class="small muted">${okCells}/${allCells} correct</p></div>
@@ -380,6 +696,7 @@ function psmt() {
     <div class="card">${PSMT.sections.map(([h, t]) => `<div class="quest"><span><b>${esc(h)}</b><br><span class="small muted">${esc(t)}</span></span></div>`).join('')}</div>
     <h2>Marking criteria</h2><ul>${PSMT.criteria.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
     <p class="small muted">Sentence starters you can adapt in your own words: "The mean for 8E was … compared with … for all Year 8s, a difference of …" · "The data is positively skewed because …" · "A limitation of our survey is …" · "To improve this investigation, I would …".</p>`;
+  view.querySelectorAll('[data-view]').forEach((b) => (b.onclick = () => { dataView = b.dataset.view; psmt(); }));
   view.querySelectorAll('input[data-k]').forEach((inp) => (inp.onkeydown = (e) => {
     if (e.key !== 'Enter' || inp.readOnly) return;
     const [gi, f] = inp.dataset.k.split(':'); const t = truth[gi];
@@ -435,7 +752,7 @@ function launch(game) {
 }
 
 // ---------- router ----------
-const ROUTES = { home, german, maths, psmt, boss: bosses, arcade };
+const ROUTES = { home, teach, german, maths, psmt, boss: bosses, arcade };
 function route() {
   if (session) { clearInterval(session.timer); session = null; }
   document.onkeydown = null;

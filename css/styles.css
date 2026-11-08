@@ -66,4 +66,34 @@ td input { font: inherit; width: 90px; padding: 6px 8px; border-radius: 8px; bor
 table { border-collapse: collapse; width: 100%; } td, th { padding: 6px 8px; border-bottom: 1px solid #2a2f4f; text-align: left; }
 .hist { width: 100%; height: 220px; }
 .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--panel2); font-size: 12px; font-weight: 700; }
+/* teaching */
+.center { text-align: center; }
+.tools { margin: -6px 0 12px; }
+.tool { background: transparent; color: var(--accent2); border: 1px solid #343a63; border-radius: 99px; padding: 5px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+.tool:hover, .tool.on { background: var(--panel2); border-color: var(--accent2); }
+.tool:disabled { opacity: .4; cursor: default; }
+.help { margin: 0 0 12px; }
+.steps { margin: 8px 0; padding-left: 22px; }
+.steps li { margin: 6px 0; animation: pop .25s ease-out; }
+.steps li:last-child { font-weight: 600; }
+@keyframes pop { from { opacity: 0; transform: translateY(4px); } }
+.lesson { margin: 14px 0; font-size: 18px; }
+.lesson h2 { margin-top: 0; }
+.quote { margin: 8px 0; padding: 10px 14px; border-left: 4px solid var(--gold); background: #fffdf5; color: #222; font-family: Georgia, serif; border-radius: 8px; }
+table.dict td { padding: 4px 8px; }
+.passage.now { font-size: 22px; margin: 12px 0; }
+.passage.faded { opacity: .45; font-size: 14px; margin-top: 12px; }
+.retype { width: 100%; margin-bottom: 8px; }
+.retype input { font: inherit; padding: 6px 10px; border-radius: 8px; border: 2px solid #343a63; background: #0b0e1a; color: var(--fg); }
+.retype input.right { border-color: var(--good); }
+.calc input, .work textarea { width: 100%; font: inherit; font-size: 18px; padding: 8px 10px; border-radius: 8px; border: 2px solid #343a63; background: #0b0e1a; color: var(--fg); }
+.calc-out { font-size: 20px; font-weight: 800; color: var(--gold); margin: 6px 0; min-height: 1.5em; }
+.keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.keypad button { padding: 10px 0; font: inherit; font-size: 18px; font-weight: 700; border: 0; border-radius: 8px; background: var(--panel2); color: var(--fg); cursor: pointer; }
+.keypad button.eq { grid-column: span 3; background: var(--accent); color: #fff; }
+.calc, .work { margin-bottom: 12px; }
+.work textarea { margin: 8px 0; font-size: 16px; resize: vertical; }
+.work canvas { width: 100%; height: 220px; background: #0b0e1a; border: 2px dashed #343a63; border-radius: 8px; touch-action: none; cursor: crosshair; display: block; margin-bottom: 8px; }
+.databox { max-height: 220px; overflow: auto; font-variant-numeric: tabular-nums; }
+.databox.nums { line-height: 1.9; word-spacing: 4px; }
 @media (max-width: 700px) { .hud { margin-left: 0; } .play .q { font-size: 20px; } }

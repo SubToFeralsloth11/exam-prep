@@ -727,21 +727,21 @@ export const READINGS = [
   "text": "Hallo,\nMeine Familie nennt mich Fritz aber das ist nur mein Spitzname. Ich bin vierzehn Jahre alt und ich gehe in die achte Klasse. Meine Schule ist die Schiller Gesamtschule und ich habe dort viele Freunde. Sie sind sehr nett zu mir. Wie sind deine Freunde und in welche Schule gehst du?\nDieses Jahr feiere ich meinen Geburtstag am sechsundzwanzigsten Juni aber mein eigentlicher Geburtstag ist am zwölften Juni. Mein Geburtsjahr ist zweitausendneun. Wann hast du Geburtstag und was ist dein Geburtsjahr?\nSchreib mir bald,\nMaike",
   "qs": [
    [
-    "What is the writer's real name?",
+    "Who wrote this letter? (their real name)",
     [
      "maike"
     ],
     "Signed \"Maike\" — \"Fritz\" is only a nickname (Spitzname)."
    ],
    [
-    "What is the writer's nickname?",
+    "What nickname does Maike's family call her?",
     [
      "fritz"
     ],
     "\"Meine Familie nennt mich Fritz\""
    ],
    [
-    "How old is the writer?",
+    "How old is Maike?",
     [
      "14",
      "fourteen"
@@ -749,7 +749,7 @@ export const READINGS = [
     "vierzehn Jahre alt = 14"
    ],
    [
-    "What year level?",
+    "What year level (Klasse) is Maike in?",
     [
      "8",
      "year 8",
@@ -759,7 +759,7 @@ export const READINGS = [
     "die achte Klasse = Year 8"
    ],
    [
-    "What day is the real birthday? (e.g. 12 June)",
+    "What is the date of Maike's actual (real) birthday? (e.g. 12 June)",
     [
      "12 june",
      "june 12",
@@ -771,7 +771,7 @@ export const READINGS = [
     "am zwölften Juni = 12 June"
    ],
    [
-    "On what date is the party this year?",
+    "On what date is Maike celebrating her birthday this year? (e.g. 12 June)",
     [
      "26 june",
      "june 26",
@@ -783,7 +783,7 @@ export const READINGS = [
     "am sechsundzwanzigsten Juni = 26 June"
    ],
    [
-    "Birth year?",
+    "In what year was Maike born?",
     [
      "2009"
     ],
@@ -796,7 +796,7 @@ export const READINGS = [
   "text": "Liebe Saskia,\nAm Samstag, den dreiundzwanzigsten Oktober feiere ich meinen Geburtstag. Ich möchte dich herzlich zu meiner Party einladen. Die Party findet bei 'Party sind wir' in der Hohenzollernstraße zehn statt. Es geht um sechzehn Uhr los und dauert bis zweiundzwanzig Uhr. Es wird Kuchen, Kekse und Pommes frites zu essen geben und Spezi und Apfelschorle zum Trinken. Bitte sag mir vorher Bescheid, ob du kommen kannst.\nMit lieben Grüßen,\nIna Schmidt",
   "qs": [
    [
-    "Who is having the birthday?",
+    "Whose birthday is it?",
     [
      "ina",
      "ina schmidt"
@@ -804,14 +804,14 @@ export const READINGS = [
     "Signed by Ina — \"feiere ich meinen Geburtstag\""
    ],
    [
-    "Who is invited?",
+    "Who is Ina inviting to her party?",
     [
      "saskia"
     ],
     "Liebe Saskia"
    ],
    [
-    "What date is the party? (e.g. 23 October)",
+    "What date is Ina's party? (e.g. 23 October)",
     [
      "23 october",
      "october 23",
@@ -824,7 +824,7 @@ export const READINGS = [
     "den dreiundzwanzigsten Oktober"
    ],
    [
-    "What day of the week?",
+    "What day of the week is Ina's party?",
     [
      "saturday",
      "samstag"
@@ -832,7 +832,7 @@ export const READINGS = [
     "Am Samstag"
    ],
    [
-    "Start time (24h, e.g. 16:00)?",
+    "What time does Ina's party start? (24h, e.g. 16:00)",
     [
      "16:00",
      "4pm",
@@ -843,7 +843,7 @@ export const READINGS = [
     "sechzehn Uhr = 16:00"
    ],
    [
-    "End time (24h)?",
+    "What time does Ina's party finish? (24h, e.g. 22:00)",
     [
      "22:00",
      "10pm",
@@ -854,7 +854,7 @@ export const READINGS = [
     "bis zweiundzwanzig Uhr = 22:00"
    ],
    [
-    "Name one food",
+    "Name one food that will be at Ina's party.",
     [
      "cake",
      "biscuits",
@@ -868,7 +868,7 @@ export const READINGS = [
     "Kuchen, Kekse, Pommes frites"
    ],
    [
-    "What does \"Bescheid sagen\" mean?",
+    "Ina asks Saskia to \"Bescheid sagen\". What does that mean?",
     [
      "let me know",
      "let someone know",
@@ -884,7 +884,7 @@ export const READINGS = [
   "text": "Lieber Helmut, liebe Lina,\nwie geht es euch? Eure Tochter, die Elena, wird dieses Jahr vierzehn Jahre alt. Ich möchte für meine Mutti und für sie eine große Party organisieren. Die Feier findet am einunddreißigsten März im Kino 'Unter den Linden' statt. Das Kino liegt in der Schillerstraße, Nummer siebzehn. Wir wollen einen Film sehen und dann gibt es leckeres Essen: Kartoffelsalat, Wurst, Apfelstrudel und Schokoladenkuchen. Zum Trinken gibt es Apfelsaft. Die Party beginnt um halb sechs. Bitte sagt Bescheid, ob ihr kommen könnt.\nLiebe Grüße",
   "qs": [
    [
-    "How old is Elena turning?",
+    "How old is Elena turning this year?",
     [
      "14",
      "fourteen"
@@ -892,7 +892,7 @@ export const READINGS = [
     "wird … vierzehn Jahre alt"
    ],
    [
-    "Who is Elena to Helmut and Lina?",
+    "Who is Elena to Helmut and Lina? (how are they related)",
     [
      "daughter",
      "their daughter",
@@ -901,7 +901,7 @@ export const READINGS = [
     "eure Tochter = your daughter"
    ],
    [
-    "Date of the party?",
+    "What date is Elena's party?",
     [
      "31 march",
      "march 31",
@@ -913,7 +913,7 @@ export const READINGS = [
     "am einunddreißigsten März"
    ],
    [
-    "Where is it?",
+    "Where is Elena's party being held?",
     [
      "cinema",
      "the cinema",
@@ -924,7 +924,7 @@ export const READINGS = [
     "im Kino \"Unter den Linden\""
    ],
    [
-    "Street address?",
+    "What is the street address of the place where Elena's party is?",
     [
      "schillerstraße 17",
      "schillerstrasse 17",
@@ -936,7 +936,7 @@ export const READINGS = [
     "Schillerstraße, Nummer siebzehn"
    ],
    [
-    "What time does it start?",
+    "What time does Elena's party start?",
     [
      "5:30",
      "17:30",
@@ -947,7 +947,7 @@ export const READINGS = [
     "um halb sechs = 5:30 (halb = half TO the next hour)"
    ],
    [
-    "What will they do first?",
+    "What will the guests do first at Elena's party?",
     [
      "watch a film",
      "see a film",
@@ -958,7 +958,7 @@ export const READINGS = [
     "einen Film sehen"
    ],
    [
-    "Drink?",
+    "What drink will there be at Elena's party?",
     [
      "apple juice",
      "apfelsaft"
@@ -973,6 +973,7 @@ export const READINGS = [
 export const SURVEY_QUESTIONS = ['Hours of sleep per day', 'Money in bank account ($)', 'Number of siblings'];
 export const SURVEY = {"8A":[[8,0,4],[9,600,1],[7,1000,0],[0,187,2],[8,451,0],[8,935,1],[10,1,2],[0,30,2],[7,1000,1],[8,1800,2],[9,500,3],[8,800,1],[8,400,1],[8,760,1],[3,300,1],[10,0,1],[8,0,2],[11,0,1]],"8B":[[8,120,1],[9,0,2],[8,90,1],[9,2000,1],[8,200,1],[8,20,1],[9,190,2],[8,100,2],[9,3000,1],[9,100,0],[8,1200,1],[7,22,4],[9,3000,0],[6,128,5],[9,0,1],[8,102,1],[8,95,2],[9,100,1],[8,274,1],[9,100,1],[7,12,0],[8,1,2],[7,100,1]],"8C":[[6,154,1],[6,300,1],[7,170,2],[9,3000,2],[7,1500,1],[8,30,1],[10,500,2],[8,1000,1],[6,1000,2]],"8E":[[5,700,1],[8,230,1],[7,571,1],[9,110,2],[8,50,1],[7,0.88,0],[9,0,1],[7,1000,1],[7,1000,2],[8,1000,3],[9,2000,1],[11,1000,1],[8,20,3],[10,4000,1],[12,360,2],[9,1200,1],[8,0,1],[8,0,6],[8,1000,2],[6,1000,2],[8,2200,5],[9,50,1]],"8F":[[8,34,2],[9,33,1],[9,1200,2],[8,0,2],[9,533,1],[9,564,1],[2,67,1],[8,10,1],[9,9,2],[8,300,1],[7,0,2],[9,35,2],[5,400,1],[8,131,2],[6,0,2],[8,500,1],[8,2100,2],[8,50,3],[9,300,1],[9,200,1],[12,100,3]],"8G":[[9,300,1],[6,100,1],[8,588,1],[7,0,2],[9,400,1],[9,600,3],[9,600,2],[6,100,2],[9,400,2],[6,0.04,2],[8,12,1],[9,200,1],[11,500,3],[8,20,1],[7,0,1],[9,0,4],[8,250,2],[11,2900,4],[9,10,1],[9,315,2],[9,1,4]],"8I":[[8,2000,3],[8,2200,2],[7,3000,2],[9,200,1],[8,80,4],[8,100,2],[10,132,2],[8,1000,2],[8,2250,0],[8,20,3],[6,100,1],[8,800,2],[10,100,1],[8,20,2],[10,110,1],[11,4000,2],[10,1200,2],[9,10,1],[8,300,0],[9,0,2],[9,33,1],[1,67,1],[7,67,1]],"8J":[[9,110,2],[7,900,1],[1,2000,2],[6,100,2],[8,10,2],[8,150,2],[6,0,2],[7,800,1],[10,20,1],[9,110,2],[9,3000,3],[9,5000,5],[10,3000,1],[9,7000,0],[9,102,2],[8,1000,1],[6,0.48,1],[7,1280,1]],"8K":[[7,30,1],[9,1200,1],[6,100,6],[8,0,2],[7,1000,0],[6,1000,0],[7,1190,1],[8,670,1],[10,1.98,4],[7,130,1],[9,9,2],[5,200,4],[8,100,3],[7,300,3],[12,300,4],[8,5000,0],[6,2000,2],[10,99,2],[8,2000,1]],"8L":[[10,330,1],[8,64,4],[7,0,1],[8,1,4],[8,1,1],[7,1000,2],[7,0,3],[9,45.44,1],[6,20,1],[8,2500,2],[8,187,1],[5,1259,3],[9,670,1],[8,200,0],[7,300,2],[9,50,2],[7,50,2],[6,100,3],[9,450,2],[0,4000,1],[8,1000,1],[0,40,7]]};
 
+// My Godot games, bought with coins earned by studying. Web builds live under play/ on each
 // Godot games already published on GitHub Pages; bought with coins earned by studying.
 export const GAMES = [
   { id: 'starhop', name: 'Starhop', url: 'https://subtoferalsloth11.github.io/starhop/' },
