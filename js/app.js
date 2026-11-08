@@ -108,6 +108,7 @@ function checkBadges() {
 // Steps are strings, or { html } for pre-built markup.
 let session = null;
 const tools = { calc: false, work: false, expr: '' };
+const WORK_KEY = 'examquest.work.';
 const stepList = (q) => (q.teach ? q.teach() : Array.isArray(q.steps) ? q.steps : String(q.steps || '').split(/(?<=[.!?])\s+|;\s+/)).filter(Boolean);
 const stepHtml = (x) => (typeof x === 'string' ? esc(x) : x.html);
 const dictTable = (rows) => `<table class="dict">${rows.map(([de, en]) => `<tr><td><b>${esc(de)}</b></td><td>${esc(en)}</td></tr>`).join('')}</table>`;
@@ -227,8 +228,8 @@ function drawTools() {
       <div class="keypad">${['7', '8', '9', '÷', '(', '4', '5', '6', '×', ')', '1', '2', '3', '−', '^', '0', '.', '%', '+', '⌫', 'C', '='].map((k) => `<button data-c="${k}" class="${k === '=' ? 'eq' : ''}">${k}</button>`).join('')}</div>
       <button class="btn alt" id="calc-use" style="margin-top:8px">Put result in my answer</button></div>` : ''}
     ${tools.work ? `<div class="card work"><b>📝 Working out</b> <span class="small muted">type or draw; nothing here is marked</span>
-      <textarea id="work-txt" rows="4" placeholder="Write your steps here…"></textarea>
-      <canvas id="work-pad" height="220"></canvas><div class="row"><button class="btn alt" id="work-clear">Clear drawing</button></div></div>` : ''}`;
+      <textarea id="work-txt" rows="4" placeholder="Write your steps here…">${esc(localStorage.getItem(WORK_KEY + 'txt') || '')}</textarea>
+      <canvas id="work-pad" height="220"></canvas><div class="row"><button class="btn alt" id="work-clear">Clear drawing</button><button class="btn alt" id="work-clear-txt">Clear writing</button></div></div>` : ''}`;
   if (tools.calc) {
     const inp = $('#calc-in'), out = $('#calc-out');
     const run = () => { try { const v = calculate(inp.value); out.textContent = `= ${v}`; tools.last = v; } catch { out.textContent = inp.value.trim() ? 'Check the sum (brackets, signs)' : '\u00a0'; tools.last = null; } };
@@ -243,15 +244,21 @@ function drawTools() {
     $('#calc-use').onclick = () => { run(); const a = $('#ans'); if (a && tools.last != null && !session?.locked) { a.value = tools.last; a.focus(); } };
   }
   if (tools.work) {
+    // Writing and drawing are kept in localStorage, so they survive new questions, switching the
+    // calculator on/off and reloading, until you clear them.
+    const t = $('#work-txt'); t.oninput = () => localStorage.setItem(WORK_KEY + 'txt', t.value);
+    $('#work-clear-txt').onclick = () => { t.value = ''; localStorage.removeItem(WORK_KEY + 'txt'); };
     const c = $('#work-pad'), g = c.getContext('2d');
     c.width = c.clientWidth || 600;
+    const saved = localStorage.getItem(WORK_KEY + 'pad');
+    if (saved) { const img = new Image(); img.onload = () => g.drawImage(img, 0, 0); img.src = saved; }
     g.lineWidth = 2.5; g.lineCap = 'round'; g.strokeStyle = '#eef0ff';
     let down = false;
     const at = (e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * (c.width / r.width), (e.clientY - r.top) * (c.height / r.height)]; };
     c.onpointerdown = (e) => { down = true; c.setPointerCapture(e.pointerId); g.beginPath(); g.moveTo(...at(e)); };
     c.onpointermove = (e) => { if (down) { g.lineTo(...at(e)); g.stroke(); } };
-    c.onpointerup = c.onpointercancel = () => (down = false);
-    $('#work-clear').onclick = () => g.clearRect(0, 0, c.width, c.height);
+    c.onpointerup = c.onpointercancel = () => { if (!down) return; down = false; try { localStorage.setItem(WORK_KEY + 'pad', c.toDataURL()); } catch {} };
+    $('#work-clear').onclick = () => { g.clearRect(0, 0, c.width, c.height); localStorage.removeItem(WORK_KEY + 'pad'); };
   }
 }
 
