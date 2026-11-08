@@ -149,3 +149,36 @@ export function checkGerman(input, accepted) {
   for (const a of accepted) if (slip(i, clean(a)) || slip(i.replace(lead, ''), clean(a).replace(lead, ''))) return 'close';
   return 'wrong';
 }
+
+// Smart marking for answers about meaning (English answers, dates, numbers): "8th class",
+// "she's in year 8" and "the 12th of June" all match. Number words become digits, ordinal
+// endings and filler words go, and the answer counts if every key word of an accepted answer is
+// there, in any order, with at most a few extra words.
+const NUMS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const ORDS = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
+const TENS_EN = { twenty: 20, thirty: 30, twentieth: 20, thirtieth: 30 };
+const FILLER = new Set(['the', 'a', 'an', 'of', 'is', 'in', 'at', 'on', 'to', 'she', 'he', 'they', 'it', 'its', 'her', 'his', 'their', 'year', 'years', 'yr', 'class', 'grade', 'level', 'old', 'and', 'was', 'will', 'be', 'are', 'its', 'shes', 'hes', 'theyre', 'theres', 'there', 'um']);
+function keyWords(s) {
+  const words = s.toLowerCase().normalize('NFC').replace(/['’]/g, '').replace(/[.,!?;:"()…/-]/g, ' ').split(/\s+/).filter(Boolean);
+  const out = [];
+  for (let k = 0; k < words.length; k++) {
+    let w = words[k];
+    if (TENS_EN[w] !== undefined) { const nx = words[k + 1], u = NUMS.indexOf(nx) > 0 ? NUMS.indexOf(nx) : ORDS.indexOf(nx) > 0 ? ORDS.indexOf(nx) : 0; if (u) k++; w = String(TENS_EN[w] + u); }
+    else if (NUMS.includes(w)) w = String(NUMS.indexOf(w));
+    else if (ORDS.includes(w)) w = String(ORDS.indexOf(w));
+    w = w.replace(/^(\d+)(st|nd|rd|th)$/, '$1');
+    if (!FILLER.has(w)) out.push(w);
+  }
+  return out;
+}
+
+export function checkMeaning(input, accepted) {
+  const got = keyWords(input);
+  if (got.length) {
+    for (const a of accepted) {
+      const need = keyWords(a);
+      if (need.length && need.every((w) => got.includes(w)) && got.length <= need.length + 3) return 'right';
+    }
+  }
+  return checkGerman(input, accepted);
+}

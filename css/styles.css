@@ -66,6 +66,12 @@ td input { font: inherit; width: 90px; padding: 6px 8px; border-radius: 8px; bor
 table { border-collapse: collapse; width: 100%; } td, th { padding: 6px 8px; border-bottom: 1px solid #2a2f4f; text-align: left; }
 .hist { width: 100%; height: 220px; }
 .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--panel2); font-size: 12px; font-weight: 700; }
+/* study time */
+.big-num { font-size: 26px; font-weight: 800; }
+.studybars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 110px; margin-top: 14px; }
+.studybars div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.studybars i { display: block; width: 100%; min-height: 2px; background: linear-gradient(var(--accent2), var(--accent)); border-radius: 6px 6px 2px 2px; }
+.studybars span { font-size: 11px; color: var(--muted); }
 /* teaching */
 mark { background: #3b2f00; color: var(--gold); padding: 0 3px; border-radius: 4px; }
 .starters li { margin: 10px 0; line-height: 1.7; }

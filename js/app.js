@@ -1,12 +1,12 @@
 import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES } from './data.js';
 import { TOPICS, checkMaths, nearMaths, stats } from './maths.js';
-import { DRILLS, checkGerman, variants } from './german.js';
+import { DRILLS, checkGerman, checkMeaning, variants } from './german.js';
 import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
 
 // ---------- state ----------
 const KEY = 'examquest.v1';
 const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Brisbane' });
-const fresh = () => ({ xp: 0, coins: 0, streak: { last: '', n: 0 }, day: {}, mastery: {}, topic: {}, badges: [], bosses: {}, playSec: 0, total: 0, bestCombo: 0, psmt: {}, claimed: {}, lessons: {} });
+const fresh = () => ({ xp: 0, coins: 0, streak: { last: '', n: 0 }, day: {}, mastery: {}, topic: {}, badges: [], bosses: {}, playSec: 0, total: 0, bestCombo: 0, psmt: {}, claimed: {}, lessons: {}, study: {} });
 let S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}'));
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 function day() {
@@ -25,12 +25,30 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
 }
 
+// ---------- study time ----------
+// Counts a second while a study screen is open, the tab is visible and you did something in the
+// last 90 seconds. `studying` is the subject of the current screen, or null (home, arcade, results).
+let studying = null, lastActive = Date.now();
+for (const ev of ['keydown', 'pointerdown', 'input', 'wheel']) addEventListener(ev, () => (lastActive = Date.now()), true);
+const studied = (date) => (S.study[date] ||= { german: 0, maths: 0, total: 0 });
+const mins = (sec) => (sec >= 3600 ? `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m` : `${Math.floor(sec / 60)}m`);
+setInterval(() => {
+  if (!studying || document.visibilityState !== 'visible' || Date.now() - lastActive > 90e3) return;
+  const d = studied(today()); d[studying]++; d.total++;
+  if (d.total % 10 === 0) save();
+  if (d.total % 60 === 0) hud();
+}, 1000);
+function lastDays(n) {
+  return Array.from({ length: n }, (_, i) => new Date(Date.now() - (n - 1 - i) * 864e5).toLocaleDateString('en-CA', { timeZone: 'Australia/Brisbane' }));
+}
+
 function hud() {
   const l = level(), lo = xpFor(l), hi = xpFor(l + 1);
   $('#hud-level').textContent = `Lv ${l}`;
   $('#hud-xp i').style.width = `${((S.xp - lo) / (hi - lo)) * 100}%`;
   $('#hud-coins').textContent = `🪙 ${S.coins}`;
   $('#hud-streak').textContent = `🔥 ${S.streak.n}`;
+  $('#hud-time').textContent = `⏱ ${mins(studied(today()).total)}`;
   document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === location.hash.split('/')[0]));
 }
 
@@ -115,6 +133,7 @@ function ask() {
   if (!s.q) return finish();
   s.locked = false; s.advance = null; s.hint = 0;
   const q = s.q, maths = q.subject === 'maths';
+  studying = q.subject;
   const terms = maths ? mathsTerms(q.prompt) : [];
   const hints = stepList(q).length > 1;
   view.innerHTML = `
@@ -326,7 +345,7 @@ function walkthrough(fb, q, intro) {
 
 function finish() {
   const s = session; if (!s) return;
-  clearInterval(s.timer); document.onkeydown = null; session = null;
+  clearInterval(s.timer); document.onkeydown = null; session = null; studying = null;
   const pct = s.n ? Math.round((s.right / s.n) * 100) : 0;
   let extra = '';
   if (s.boss) {
@@ -357,7 +376,7 @@ function vocabQ(list, dir, word) {
   const id = `v:${dir}:${de}`;
   const art = de.match(/^(der|die|das) /)?.[1];
   const tip = art ? `It's a "${art}" word. Learn der/die/das together with the noun: ${de}.` : '';
-  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', lenient: true, answer: en, retype: en, check: (i) => checkGerman(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
+  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', lenient: true, answer: en, retype: en, check: (i) => checkMeaning(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
   return { id, subject: 'german', topic: list, prompt: `How do you say "${en}" in German?`, kind: 'text', keys: true, answer: de, retype: de, check: (i) => checkGerman(i, [de]), steps: tip, teach: () => [`"${en}" in German is "${de}".`, tip].filter(Boolean) };
 }
 
@@ -375,7 +394,7 @@ function vocabNext(list, dir) {
 }
 
 function drillNext(name) {
-  const make = () => { const d = DRILLS[name](); return { subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkGerman(i, d.a), steps: d.steps, similar: make }; };
+  const make = () => { const d = DRILLS[name](); return { subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkMeaning(i, d.a), steps: d.steps, similar: make }; };
   return make;
 }
 
@@ -396,7 +415,7 @@ function readingNext(r) {
     const chunk = chunks.length ? findChunk(chunks, q) : null;
     return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', lenient: true, answer: q[1][0], steps: q[2],
       teach: chunk ? () => [{ html: `Find the part of the letter this is about:<div class="quote">${esc(chunk[0])}</div>` }, { html: `Mini dictionary for that part:${dictTable(chunk[2])}` }, `In English: "${chunk[1]}"`, q[2]] : null,
-      check: (i) => { const c = i.toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim(); if (!c) return 'wrong'; return q[1].some((a) => c === a || (a.length > 3 && c.includes(a))) ? 'right' : checkGerman(i, q[1]); } };
+      check: (i) => checkMeaning(i, q[1]) };
   };
 }
 
@@ -429,6 +448,18 @@ function weakest(prefix) {
   return names.map((n) => { const t = S.topic[n] || { seen: 0, right: 0 }; return [n, t.seen ? t.right / t.seen : -1, t.seen]; }).sort((a, b) => a[1] - b[1] || a[2] - b[2])[0][0];
 }
 
+function studyCard() {
+  const t = studied(today()), week = lastDays(7).map((d) => [d, S.study[d]?.total || 0]);
+  const weekSum = week.reduce((x, [, s]) => x + s, 0), all = Object.values(S.study).reduce((x, d) => x + d.total, 0);
+  const top = Math.max(60, ...week.map(([, s]) => s));
+  return `<div class="card"><div class="row" style="gap:28px">
+      <div><div class="small muted">Today</div><div class="big-num">${mins(t.total)}</div><div class="small muted">🇩🇪 ${mins(t.german)} · 📐 ${mins(t.maths)}</div></div>
+      <div><div class="small muted">Last 7 days</div><div class="big-num">${mins(weekSum)}</div></div>
+      <div><div class="small muted">All time</div><div class="big-num">${mins(all)}</div></div></div>
+    <div class="studybars">${week.map(([d, s]) => `<div title="${d}: ${mins(s)}"><i style="height:${(s / top) * 100}%"></i><span>${new Date(`${d}T12:00:00+10:00`).toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'Australia/Brisbane' })}</span></div>`).join('')}</div>
+    <p class="small muted">Counts while you're on a question, lesson, read-along or the PSMT lab, and pauses after 90 seconds of doing nothing.</p></div>`;
+}
+
 function home() {
   const d = day();
   const arcadeOpen = d.correct >= 20;
@@ -439,6 +470,9 @@ function home() {
       <div class="card exam ${days < 4 ? 'urgent' : ''}"><div class="pill">${e.subject}</div><h3 style="margin-top:6px">${esc(e.name)}</h3>
       <div class="big">${countdown(e.due)}</div><div class="small muted">${new Date(e.due).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Australia/Brisbane' })}</div>
       <p class="small muted">${esc(e.note)}</p></div>`; }).join('')}</div>
+
+    <h2>⏱ Time studied</h2>
+    ${studyCard()}
 
     <h2>Today's quests</h2>
     <div class="card">${QUESTS.map((q) => { const v = Math.min(q.goal, q.get(d)); return `<div class="quest"><span class="${d.quests[q.id] ? 'done' : ''}">${d.quests[q.id] ? '✅' : '⬜'} ${q.text}</span><span class="small muted">${v}/${q.goal} · +${q.coins} 🪙</span></div>`; }).join('')}
@@ -497,6 +531,7 @@ function german() {
 
 // Flashcards: flip, then rate yourself. Small XP, no coins (coins are for recall, not peeking).
 function learn(list) {
+  studying = 'german';
   const words = shuffle(GERMAN[list]); let i = 0, flipped = false;
   const draw = () => {
     if (i >= words.length) { reward(20, 0, `📚 Finished learning ${list}. Now test yourself for coins!`); return german(); }
@@ -536,6 +571,7 @@ function markTaught(key) {
 
 // Steps through cards one line at a time. Enter / → goes forward, ← goes back.
 function runCards(title, cards, onDone) {
+  studying = title.includes('German') || !Object.keys(TOPICS).some((t) => title.includes(t)) ? 'german' : 'maths';
   let c = 0, l = 0;
   const fwd = () => { if (l + 1 < cards[c].s.length) l++; else if (c + 1 < cards.length) { c++; l = 0; } else { document.onkeydown = null; return onDone(); } draw(); };
   const back = () => { if (l > 0) l--; else if (c > 0) { c--; l = cards[c].s.length - 1; } draw(); };
@@ -577,6 +613,7 @@ function readingTips() {
 
 // One piece of the letter at a time, with a mini dictionary and the meaning on request.
 function readAlong(ri) {
+  studying = 'german';
   const r = READINGS[ri], chunks = READ_ALONG[r.title];
   let i = 0, shown = false;
   const fwd = () => { if (!shown) { shown = true; return draw(); } if (i + 1 < chunks.length) { i++; shown = false; return draw(); } done(); };
@@ -607,6 +644,7 @@ function readAlong(ri) {
 
 // Teaches a word list five words at a time: meet each word, then a quick check on those five.
 function teachWords(list) {
+  studying = 'german';
   const all = GERMAN[list], groups = [];
   for (let k = 0; k < all.length; k += 5) groups.push(all.slice(k, k + 5));
   let g = 0, w = 0, queue = null;
@@ -718,6 +756,7 @@ function starters(qi, truth, unlocked, st) {
 }
 
 function psmt() {
+  studying = 'maths';
   const qi = Number(location.hash.split('/')[1] || 0);
   const st = (S.psmt[qi] ||= { cells: {}, shapes: {}, done: false });
   const fields = [['n', 'Count'], ['mean', 'Mean (2 d.p.)'], ['median', 'Median'], ['mode', 'Mode'], ['range', 'Range']];
@@ -805,6 +844,7 @@ function launch(game) {
 // ---------- router ----------
 const ROUTES = { home, teach, german, maths, psmt, boss: bosses, arcade };
 function route() {
+  studying = null;
   if (session) { clearInterval(session.timer); session = null; }
   document.onkeydown = null;
   const r = (location.hash.slice(1).split('/')[0]) || 'home';
