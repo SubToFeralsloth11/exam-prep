@@ -841,16 +841,49 @@ function launch(game) {
     if (!pageLoaded) return false;
     try { const st = frame.contentDocument.getElementById('status'); return !st || getComputedStyle(st).display === 'none' || st.style.visibility === 'hidden'; } catch { return true; }
   };
+  // Freeze / pause-menu detection. Right after each frame the game draws, take a tiny 16x16 sample
+  // of its canvas (WebGL clears the image after the frame, so it has to be sampled inside that frame).
+  // If no frames arrive, or the picture hasn't changed for STILL seconds, the game is frozen or sitting
+  // on a pause menu, so the timer stops until the picture moves again.
+  const STILL = 3;
+  const probe = document.createElement('canvas'); probe.width = probe.height = 16;
+  const pctx = probe.getContext('2d', { willReadFrequently: true });
+  let lastFrame = 0, lastChange = 0, lastSig = '', lastSample = 0, hooked = null, hookFailed = false;
+  const sample = () => {
+    const now = Date.now(); lastFrame = now;
+    if (now - lastSample < 250) return; lastSample = now;
+    try {
+      const c = frame.contentDocument.querySelector('canvas'); if (!c || !c.width) return;
+      pctx.clearRect(0, 0, 16, 16); pctx.drawImage(c, 0, 0, 16, 16);
+      const d = pctx.getImageData(0, 0, 16, 16).data; let h = 0;
+      for (let i = 0; i < d.length; i++) h = (h * 31 + d[i]) | 0;
+      if (h !== lastSig) { lastSig = h; lastChange = now; }
+    } catch { lastChange = now; } // can't read the picture: never block the timer
+  };
+  const hook = () => {
+    const w = frame.contentWindow; if (!w || w === hooked) return;
+    hooked = w; lastFrame = lastChange = Date.now();
+    try {
+      const raf = w.requestAnimationFrame.bind(w);
+      w.requestAnimationFrame = (cb) => raf((t) => { cb(t); sample(); });
+    } catch { hookFailed = true; } // other-origin game: can't look inside, timer just runs
+  };
+  const frozen = () => !hookFailed && Date.now() - Math.min(lastFrame, lastChange) > STILL * 1000;
   const close = () => { clearInterval(tick); wrap.remove(); save(); hud(); arcade(); };
   const tick = setInterval(() => {
+    hook();
     if (!ready) {
       waited++;
-      if (gameStarted()) { ready = true; loading.remove(); }
+      if (gameStarted()) { ready = true; loading.remove(); lastFrame = lastChange = Date.now(); }
       else {
         $('#left', wrap).textContent = `⏸ ${fmt()} left (paused while loading)`;
         if (waited >= 6) $('#load-msg', wrap).textContent = `Still working, this one is taking a while (${waited}s). Big games can take up to a minute. Your timer stays paused.`;
         return;
       }
+    }
+    if (document.visibilityState !== 'visible' || frozen()) {
+      $('#left', wrap).textContent = `⏸ ${fmt()} left (paused: game frozen or on a pause screen)`;
+      return;
     }
     S.playSec = Math.max(0, S.playSec - 1);
     $('#left', wrap).textContent = `⏱ ${fmt()} left`;
