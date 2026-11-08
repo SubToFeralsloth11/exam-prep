@@ -21,7 +21,7 @@ Live: https://subtoferalsloth11.github.io/exam-prep/
 - **❓ What does this mean?** explains the maths words in the question (median, markup, 2 d.p.…) or shows the letter's mini dictionary.
 - **💡 Hint** shows the next step only. A hinted right answer earns 1 coin.
 - **Type `?`** in any question to open the mini dictionary and the next hint without leaving the question.
-- **🧮 Calculator** and **📝 Working out** (type or draw) on every maths question.
+- **🧮 Calculator** and **📝 Working out** (type or draw) on every maths question. Working out is kept (even after a reload) until you press Clear.
 - **Smart marking.** Answers about meaning are marked on their key words: "8th class", "she's in year 8" and "eight" all match 8, and "the 12th of June" matches 12 June. The right words in a different order count. A small spelling slip counts for English answers; for German answers and maths numbers that are nearly right it says "So close!" and lets you try once more.
 
 ## Time studied
@@ -46,7 +46,9 @@ tools/publish_game.sh ~/Code/DL3/dl-3-overhaul dl3-overhaul drift-legends-3-play
 tools/publish_game.sh "~/Code/Friend end-dp" dear-passengers-overhaul any-pilots-on-board
 ```
 
-Exports a clean worktree of that commit for the web (Godot 4.7, no threads, so it runs on GitHub Pages) and pushes it to `play/` on the `gh-pages` branch of `<pages_repo>`, creating that repo as public if it doesn't exist. Packs over 90 MB are split into parts (GitHub's file limit is 100 MB) and the page joins them when the game loads. Anything else on the branch, such as Timbum's trailer page, is left alone.
+Exports a clean worktree of that commit for the web (Godot 4.7, no threads, so it runs on GitHub Pages) and pushes it to `play/` on the `gh-pages` branch of `<pages_repo>`, creating that repo as public if it doesn't exist. Packs over 90 MB are split into parts (GitHub's file limit is 100 MB). `tools/game_loader.js` is added to the game page: it joins the parts, keeps the game files in the browser's cache so only the first launch of each build downloads them, and re-locks the mouse on the next click when the browser refused the game's lock request. Anything else on the branch, such as Timbum's trailer page, is left alone.
+
+While a game runs, the arcade's play timer pauses during loading, when the tab is hidden, and when the game picture hasn't changed for 3 seconds (frozen, or sitting on a pause menu).
 
 ## Run locally
 
