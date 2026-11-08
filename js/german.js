@@ -111,16 +111,41 @@ export function variants(answer) {
   return answer.split(/\s*[\/,]\s*(?=to |the |a |an |\w)/).map((s) => s.replace(/\(.*?\)/g, '').trim()).concat([answer.replace(/\(.*?\)/g, '').trim(), answer]).filter(Boolean);
 }
 
+// Edit distance (insert/delete/swap a letter = 1).
+function lev(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+const ARTICLE = /^(der|die|das|den|dem) /;
+// A spelling slip: 1 letter off for words of 5–8 letters, 2 for longer. Short words and a wrong
+// der/die/das never count, because those are the thing being tested.
+function slip(input, answer) {
+  const i = flat(input), a = flat(answer);
+  if (a.length < 5 || i.match(ARTICLE)?.[1] !== a.match(ARTICLE)?.[1]) return false;
+  return lev(i, a) <= (a.length <= 8 ? 1 : 2);
+}
+
+// 'right', 'order' (right words, different order), 'accent' (only umlauts/ß off), 'close' (a small
+// spelling slip) or 'wrong'.
 export function checkGerman(input, accepted) {
   const i = clean(input);
   if (!i) return 'wrong';
+  const lead = /^(to|the|a|an|at|on) /;
   for (const a of accepted) {
     const c = clean(a);
     if (i === c) return 'right';
     // English answers: leading "to/the/a/an/at/on" optional
-    const lead = /^(to|the|a|an|at|on) /;
     if (i.replace(lead, '') === c.replace(lead, '')) return 'right';
   }
   for (const a of accepted) if (flat(input) === flat(a)) return 'accent';
+  // Same words in a different order still means the same thing, so it counts.
+  const bag = (s) => clean(s).replace(lead, '').split(' ').sort().join(' ');
+  for (const a of accepted) if (clean(a).includes(' ') && bag(input) === bag(a)) return 'order';
+  for (const a of accepted) if (slip(i, clean(a)) || slip(i.replace(lead, ''), clean(a).replace(lead, ''))) return 'close';
   return 'wrong';
 }

@@ -169,4 +169,11 @@ export function checkMaths(input, answer) {
   return i === norm(answer);
 }
 
+// Nearly right: a rounding slip or a small arithmetic error (within 2%, or 0.1).
+export function nearMaths(input, answer) {
+  if (typeof answer !== 'number') return false;
+  const v = Number(norm(input).replace(/,/g, ''));
+  return Number.isFinite(v) && Math.abs(v - answer) <= Math.max(0.1, Math.abs(answer) * 0.02);
+}
+
 export const stats = { mean, median, sorted, r2 };

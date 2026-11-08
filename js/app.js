@@ -1,5 +1,5 @@
 import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES } from './data.js';
-import { TOPICS, checkMaths, stats } from './maths.js';
+import { TOPICS, checkMaths, nearMaths, stats } from './maths.js';
 import { DRILLS, checkGerman, variants } from './german.js';
 import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
 
@@ -232,20 +232,32 @@ function tickTimer() {
 function answer(input, btn) {
   const s = session, q = s.q;
   if (s.locked) return;
-  s.locked = true; s.n++;
-  const res = q.check(input);
   const fb = $('#fb'), d = day();
-  if (res === 'right' || res === 'accent') {
+  let res = q.check(input);
+  // A small slip: English answers just count; otherwise say "close" and allow one more try.
+  if (res === 'close') {
+    if (q.lenient) res = 'typo';
+    else if (!q.closeTried) {
+      q.closeTried = true;
+      fb.innerHTML = `<b style="color:var(--warn)">🤏 So close!</b> ${q.subject === 'maths' ? 'Your number is nearly right. Check your working and the rounding, then try again.' : 'One or two letters are off. Check the spelling and try again.'}`;
+      const inp = $('#ans'); inp?.classList.add('accent'); inp?.focus(); inp?.select();
+      return;
+    } else res = q.subject === 'maths' ? 'wrong' : 'typo';
+  }
+  s.locked = true; s.n++;
+  if (res === 'right' || res === 'order' || res === 'accent' || res === 'typo') {
     s.right++; s.combo++; S.total++; d.correct++; d[q.subject]++;
     d.combo = Math.max(d.combo, s.combo); S.bestCombo = Math.max(S.bestCombo, s.combo);
     const mult = s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1, coins = q.hinted ? 1 : 2 * mult;
-    reward(res === 'right' ? 10 : 6, coins);
+    reward(res === 'right' || res === 'order' ? 10 : res === 'typo' ? 8 : 6, coins);
     if (q.id) S.mastery[q.id] = Math.min(5, (S.mastery[q.id] || 0) + 1);
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; t.right++; }
     if (s.boss) { s.hp--; const b = $('#boss'); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 150); }
     fb.innerHTML = res === 'right'
       ? `<b class="done">✔ Correct!</b> +${coins} 🪙 ${mult > 1 && !q.hinted ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${stepList(q).length && !q.teach ? `<div class="muted small">${stepList(q).map(stepHtml).join(' → ')}</div>` : ''}`
-      : `<b style="color:var(--warn)">≈ Almost — check your umlauts/ß:</b> ${esc(q.answer)}`;
+      : res === 'order' ? `<b class="done">✔ Right!</b> +${coins} 🪙 <span class="muted">Same words, different order. The usual way: <b>${esc(q.answer)}</b></span>`
+      : res === 'typo' ? `<b class="done">✔ Right!</b> +${coins} 🪙 <span style="color:var(--warn)">Watch the spelling: <b>${esc(q.answer)}</b></span>`
+        : `<b style="color:var(--warn)">≈ Almost — check your umlauts/ß:</b> ${esc(q.answer)}`;
     const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.style.marginTop = '10px'; nb.onclick = ask;
     fb.appendChild(document.createElement('br')); fb.appendChild(nb); nb.focus();
     s.advance = ask;
@@ -331,7 +343,7 @@ function vocabQ(list, dir, word) {
   const id = `v:${dir}:${de}`;
   const art = de.match(/^(der|die|das) /)?.[1];
   const tip = art ? `It's a "${art}" word. Learn der/die/das together with the noun: ${de}.` : '';
-  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', answer: en, retype: en, check: (i) => checkGerman(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
+  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', lenient: true, answer: en, retype: en, check: (i) => checkGerman(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
   return { id, subject: 'german', topic: list, prompt: `How do you say "${en}" in German?`, kind: 'text', keys: true, answer: de, retype: de, check: (i) => checkGerman(i, [de]), steps: tip, teach: () => [`"${en}" in German is "${de}".`, tip].filter(Boolean) };
 }
 
@@ -368,7 +380,7 @@ function readingNext(r) {
   return (s) => {
     const q = order[s.n % order.length];
     const chunk = chunks.length ? findChunk(chunks, q) : null;
-    return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', answer: q[1][0], steps: q[2],
+    return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', lenient: true, answer: q[1][0], steps: q[2],
       teach: chunk ? () => [{ html: `Find the part of the letter this is about:<div class="quote">${esc(chunk[0])}</div>` }, { html: `Mini dictionary for that part:${dictTable(chunk[2])}` }, `In English: "${chunk[1]}"`, q[2]] : null,
       check: (i) => { const c = i.toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim(); if (!c) return 'wrong'; return q[1].some((a) => c === a || (a.length > 3 && c.includes(a))) ? 'right' : checkGerman(i, q[1]); } };
   };
@@ -377,7 +389,7 @@ function readingNext(r) {
 function mathsQ(topic) {
   const g = TOPICS[topic]();
   return { subject: 'maths', topic, prompt: g.q, kind: g.choices ? 'mc' : 'text', choices: g.choices, answer: g.a, steps: g.steps, similar: () => mathsQ(topic),
-    check: (i) => (g.choices ? (i === g.a ? 'right' : 'wrong') : checkMaths(i, g.a) ? 'right' : 'wrong') };
+    check: (i) => (g.choices ? (i === g.a ? 'right' : 'wrong') : checkMaths(i, g.a) ? 'right' : nearMaths(i, g.a) ? 'close' : 'wrong') };
 }
 const mixedMaths = (topics) => () => mathsQ(topics[Math.floor(Math.random() * topics.length)]);
 const germanMix = () => {
