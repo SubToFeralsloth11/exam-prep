@@ -53,13 +53,13 @@ export const DRILLS = {
     return pick([
       { q: `Write in German: on the ${EN_ORD(d)} of ${MONTHS_EN[m]}`, a: [amDatum(d, m)], steps: [`"On the …" = "am".`, `Turn ${d} into an ordinal (1st, 2nd…). ${ordinalWhy(d)}`, `After "am" the ordinal ends in -en: ${ordinal(d)}en.`, `${MONTHS_EN[m]} = ${MONTHS[m]}.`, `Together: ${amDatum(d, m)}`] },
       { q: `What date is "${amDatum(d, m)}"? (e.g. 3 May or 3/5)`, a: [`${d} ${MONTHS_EN[m]}`.toLowerCase(), `${MONTHS_EN[m]} ${d}`.toLowerCase(), `${EN_ORD(d)} ${MONTHS_EN[m]}`.toLowerCase(), `${EN_ORD(d)} of ${MONTHS_EN[m]}`.toLowerCase(), `${d}/${m + 1}`, `${d}.${m + 1}`, `${d}.${String(m + 1).padStart(2, '0')}`], steps: [`"am" = "on the". Drop the -en ending: ${ordinal(d)}en → ${ordinal(d)}.`, `${ordinalWhy(d)} So it's the ${EN_ORD(d)}.`, `${MONTHS[m]} = ${MONTHS_EN[m]}.`, `Answer: ${d} ${MONTHS_EN[m]}`] },
-      { q: `Wann hast du Geburtstag? (When is your birthday?) Fill the gap for ${d}. ${MONTHS[m]}: "Ich habe ___ Geburtstag."`, a: [amDatum(d, m)], steps: [`Birthdays use "am" + ordinal + -en + month.`, `${ordinalWhy(d)} With -en: ${ordinal(d)}en.`, `Ich habe ${amDatum(d, m)} Geburtstag.`] },
+      { q: `"Ich habe ___ Geburtstag." = "My birthday is ___." Fill the gap (___) with the date ${d}. ${MONTHS[m]} in German, e.g. "am vierten Mai".`, a: [amDatum(d, m)], steps: [`Birthdays use "am" + ordinal + -en + month.`, `${ordinalWhy(d)} With -en: ${ordinal(d)}en.`, `Ich habe ${amDatum(d, m)} Geburtstag.`] },
     ]);
   },
   'Ordinalzahlen (1–31)': () => {
     const n = R(1, 31), o = n % 10, t = Math.floor(n / 10);
     return pick([
-      { q: `Ordinal of ${n} in German (der/die/das ___e), e.g. 4 → vierte`, a: [`${ordinal(n)}e`], steps: [ordinalWhy(n), `Ordinals after der/die/das end in -e: ${ordinal(n)}e.`] },
+      { q: `How do you say "the ${EN_ORD(n)}" in German? Type just the ordinal word, e.g. 4th → vierte`, a: [`${ordinal(n)}e`], steps: [ordinalWhy(n), `Ordinals after der/die/das end in -e: ${ordinal(n)}e.`] },
       { q: `Write the number ${n} in German`, a: [zahl(n)], steps: n > 20 && o ? [`German says the ones BEFORE the tens, joined by "und".`, `${n} = ${o} and ${t * 10}: ${o === 1 ? 'ein' : zahl(o)} + und + ${zahl(t * 10)}.`, zahl(n)] : [`${n} is a word you just learn: ${zahl(n)}.`] },
     ]);
   },
@@ -71,7 +71,7 @@ export const DRILLS = {
     return pick([
       { q: `Write the year ${y} in German`, a: [jahr(y)], steps: how },
       { q: `Which year is "${jahr(y)}"?`, a: [String(y)], steps: [y < 2000 ? `Split it at "hundert": ${zahl(hi)} | hundert | ${zahl(r)}.` : `Split it: zweitausend | ${r ? zahl(r) : ''}.`, y < 2000 ? `${zahl(hi)} = ${hi}, hundert = hundred, ${zahl(r)} = ${r}. So ${hi} hundred and ${r}.` : `zweitausend = 2000${r ? `, ${zahl(r)} = ${r}` : ''}.`, `= ${y}`] },
-      { q: `"I was born in ${y}." → Ich wurde ___ geboren.`, a: [jahr(y)], steps: [`In German you don't say "in" before a year. Just the year.`, ...how, `Ich wurde ${jahr(y)} geboren.`] },
+      { q: `"Ich wurde ___ geboren." = "I was born in ${y}." Fill the gap (___) with the year ${y} written in German words.`, a: [jahr(y)], steps: [`In German you don't say "in" before a year. Just the year.`, ...how, `Ich wurde ${jahr(y)} geboren.`] },
     ]);
   },
   'Uhrzeit (time)': () => {

@@ -680,6 +680,29 @@ function dataBlock(xs) {
   return `<div class="databox nums">${(dataView === 'sorted' ? stats.sorted(xs) : xs).join(', ')}</div>`;
 }
 
+// Report sentence starters for one survey question. Every gap says what goes in it; once the
+// numbers have been worked out in Step 1 they are filled in.
+function starters(qi, truth, unlocked, st) {
+  const unit = [' hours', '', ' siblings'][qi], money = qi === 1 ? '$' : '';
+  const v = (x) => `${money}${stats.r2(x)}${unit}`;
+  const gap = (label) => `<mark>[${label}]</mark>`;
+  const fill = (x, label) => (unlocked ? `<mark>${v(x)}</mark>` : gap(label));
+  const [e, , all] = truth;
+  const shape = GROUPS.every((_, i) => st.shapes[i] === skew(truth[i].xs)) ? skew(e.xs) : null;
+  const why = shape === 'positively skewed' ? `the long tail is on the right and the mean (${v(e.mean)}) is bigger than the median (${v(e.median)})`
+    : shape === 'negatively skewed' ? `the long tail is on the left and the mean (${v(e.mean)}) is smaller than the median (${v(e.median)})`
+      : shape ? `both sides are about even and the mean (${v(e.mean)}) is close to the median (${v(e.median)})` : null;
+  return [
+    `The mean for 8E was ${fill(e.mean, "8E's mean from Step 1")} compared with ${fill(all.mean, "the All Year 8s mean from Step 1")} for all Year 8s, a difference of ${fill(Math.abs(e.mean - all.mean), 'the bigger mean minus the smaller mean')}.`,
+    `The median for 8E was ${fill(e.median, "8E's median")} and for all Year 8s it was ${fill(all.median, "the All Year 8s median")}.`,
+    `The range for 8E was ${fill(e.range, "8E's range")} compared with ${fill(all.range, "the All Year 8s range")} for all Year 8s, so 8E's answers are ${unlocked ? `<mark>${e.range > all.range ? 'more' : e.range < all.range ? 'less' : 'just as'} spread out</mark>` : gap('"more" or "less" spread out: a bigger range means more spread out')} than the whole year group.`,
+    `The 8E data is ${shape ? `<mark>${shape}</mark>` : gap('the shape you picked for 8E in Step 2')} because ${why ? `<mark>${why}</mark>` : gap('where the long tail of the histogram is, and whether the mean is bigger or smaller than the median')}.`,
+    `So 8E ${gap('"can" or "cannot"')} be considered the average Year 8 class for this question, because ${gap('whether the mean, median and range above are close to the whole year\'s or far from them')}.`,
+    `A limitation of our survey is ${gap(['one thing that makes the data less reliable, e.g. students guessed how many hours they sleep', 'one thing that makes the data less reliable, e.g. students guessed or didn\'t want to say how much money they have', 'one thing that makes the data less reliable, e.g. some students may have counted step- or half-siblings differently'][qi])}.`,
+    `To improve this investigation, I would ${gap('one change that fixes that limitation, e.g. survey a random sample from every Year 8 class, or ask a clearer question')}.`,
+  ];
+}
+
 function psmt() {
   const qi = Number(location.hash.split('/')[1] || 0);
   const st = (S.psmt[qi] ||= { cells: {}, shapes: {}, done: false });
@@ -707,7 +730,9 @@ function psmt() {
     <h2>Step 3 · Report checklist (from the task sheet)</h2>
     <div class="card">${PSMT.sections.map(([h, t]) => `<div class="quest"><span><b>${esc(h)}</b><br><span class="small muted">${esc(t)}</span></span></div>`).join('')}</div>
     <h2>Marking criteria</h2><ul>${PSMT.criteria.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
-    <p class="small muted">Sentence starters you can adapt in your own words: "The mean for 8E was … compared with … for all Year 8s, a difference of …" · "The data is positively skewed because …" · "A limitation of our survey is …" · "To improve this investigation, I would …".</p>`;
+    <h2>Step 4 · Sentences for your report</h2>
+    <p class="small muted">Each <mark>highlighted</mark> part tells you exactly what to put there. ${unlocked ? 'The numbers are filled in from Step 1, so check them against yours.' : 'Finish Step 1 and the numbers fill themselves in.'} Rewrite them in your own words.</p>
+    <div class="card"><ol class="starters">${starters(qi, truth, unlocked, st).map((x) => `<li>${x}</li>`).join('')}</ol></div>`;
   view.querySelectorAll('[data-view]').forEach((b) => (b.onclick = () => { dataView = b.dataset.view; psmt(); }));
   view.querySelectorAll('input[data-k]').forEach((inp) => (inp.onkeydown = (e) => {
     if (e.key !== 'Enter' || inp.readOnly) return;
