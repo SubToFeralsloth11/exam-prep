@@ -96,10 +96,12 @@ const dictTable = (rows) => `<table class="dict">${rows.map(([de, en]) => `<tr><
 
 function play({ title, next, limit = 20, boss = null, onEnd }) {
   session = { title, next, limit, boss, onEnd, n: 0, right: 0, combo: 0, q: null, locked: false, hp: boss ? boss.hp : 0, hearts: boss ? 3 : 0, start: Date.now(), wrongs: [], pending: null, advance: null };
-  // Enter checks the answer, then steps through the explanation, then moves on.
+  // Enter checks the answer, then steps through the explanation, then moves on. Typing ? opens help.
   document.onkeydown = (e) => {
-    const s = session; if (e.key !== 'Enter' || !s) return;
+    const s = session; if (!s) return;
     if (e.target.closest?.('#toolbox, .retype')) return;
+    if (e.key === '?') { if (!s.locked) { e.preventDefault(); s.help?.(); } return; }
+    if (e.key !== 'Enter') return;
     if (!s.locked) { if (e.target.id === 'ans') { e.preventDefault(); answer(e.target.value); } return; }
     e.preventDefault(); s.advance?.();
   };
@@ -136,10 +138,10 @@ function ask() {
       ${q.kind === 'mc'
         ? `<div class="choices">${q.choices.map((c, i) => `<button data-i="${i}">${esc(c)}</button>`).join('')}</div>
            <div class="row" style="margin-top:10px"><button class="btn alt" id="idk">I don't know</button></div>`
-        : `<input type="text" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer, Enter to check">
+        : `<input type="text" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer, Enter to check, ? for help">
            ${q.keys ? `<div class="keys">${['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'].map((k) => `<button data-k="${k}">${k}</button>`).join('')}</div>` : ''}
            <div class="row"><button class="btn" id="check">Check</button><button class="btn alt" id="idk">I don't know</button></div>`}
-      <div class="feedback" id="fb"><span class="muted">${s.boss ? 'Every right answer hits the boss. 3 wrong and you lose.' : 'Stuck? Press "I don\'t know" and I\'ll show you how, one step at a time.'}</span></div>
+      <div class="feedback" id="fb"><span class="muted">${s.boss ? 'Every right answer hits the boss. 3 wrong and you lose.' : 'Stuck? Type <b>?</b> for help, or press "I don\'t know" and I\'ll show you how, one step at a time.'}</span></div>
     </div>`;
   $('#quit').onclick = (e) => { e.preventDefault(); finish(); };
   $('#idk').onclick = () => !s.locked && answer('');
@@ -150,17 +152,29 @@ function ask() {
     view.querySelectorAll('.keys button').forEach((b) => (b.onclick = () => { const p = inp.selectionStart; inp.value = inp.value.slice(0, p) + b.dataset.k + inp.value.slice(inp.selectionEnd); inp.focus(); inp.setSelectionRange(p + 1, p + 1); }));
   }
   const help = $('#helpbox');
-  $('#t-means') && ($('#t-means').onclick = () => {
-    help.innerHTML = `<div class="card help"><b>📖 Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
-  });
-  $('#t-hint') && ($('#t-hint').onclick = () => {
-    const steps = stepList(q); if (s.locked || s.hint >= steps.length - 1) return;
+  help.innerHTML = '<div id="h-means"></div><div id="h-hints"></div>';
+  const showMeans = () => {
+    $('#h-means').innerHTML = `<div class="card help"><b>📖 Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
+  };
+  const showHint = () => {
+    const steps = stepList(q); if (s.locked || s.hint >= steps.length - 1) return false;
     q.hinted = true;
-    if (!help.querySelector('.hints')) help.innerHTML = '<div class="card help"><b>💡 Hints</b> <span class="small muted">(a hinted answer earns 1 🪙)</span><ol class="steps hints"></ol></div>';
-    help.querySelector('.hints').insertAdjacentHTML('beforeend', `<li>${stepHtml(steps[s.hint++])}</li>`);
+    const box = $('#h-hints');
+    if (!box.innerHTML) box.innerHTML = '<div class="card help"><b>💡 Hints</b> <span class="small muted">(a hinted answer earns 1 🪙)</span><ol class="steps hints"></ol></div>';
+    box.querySelector('.hints').insertAdjacentHTML('beforeend', `<li>${stepHtml(steps[s.hint++])}</li>`);
     if (s.hint >= steps.length - 1) $('#t-hint').disabled = true;
-  });
+    return true;
+  };
+  $('#t-means') && ($('#t-means').onclick = showMeans);
+  $('#t-hint') && ($('#t-hint').onclick = showHint);
+  // "?" shows what the words mean and the next hint; if there's nothing left, it says what to do.
+  s.help = () => {
+    if (terms.length || q.dict) showMeans();
+    if (!showHint() && !(terms.length || q.dict)) $('#h-hints').innerHTML = `<div class="card help">💡 No more hints for this one. Press <b>I don't know</b> and I'll show you how it's done${LESSONS[q.topic] && !s.boss ? ', or 📖 <b>Teach me this</b> for the full lesson' : ''}.</div>`;
+  };
   $('#t-teach') && ($('#t-teach').onclick = () => { session = null; lesson(q.topic); });
+  const ansBox = $('#ans');
+  if (ansBox) ansBox.oninput = () => { if (ansBox.value.includes('?')) { ansBox.value = ansBox.value.replace(/\?/g, ''); s.help(); } }; // phones may skip keydown
   if (maths) {
     $('#t-calc').onclick = () => { tools.calc = !tools.calc; $('#t-calc').classList.toggle('on', tools.calc); drawTools(); };
     $('#t-work').onclick = () => { tools.work = !tools.work; $('#t-work').classList.toggle('on', tools.work); drawTools(); };
