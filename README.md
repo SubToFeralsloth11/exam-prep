@@ -8,11 +8,25 @@ Live: https://subtoferalsloth11.github.io/exam-prep/
 
 | Page | Content | Source |
 | --- | --- | --- |
-| German | Both Education Perfect word lists, Stile Unit 8 vocab (seasons, time, party food, Halloween), generated drills for dates, ordinals, years, time and seasons, and three reading-comprehension texts | Education Perfect (8E German), Stile "Unit 8: Was feiert man in Deutschland?" |
+| Teach me | Every lesson in order, for when you have no idea where to start. Lessons show one small step at a time, then give you 5 practice questions. | Written from the content below |
+| German | Read-alongs that go through each exam-style letter one piece at a time with a mini dictionary and the English meaning, word lists taught five words at a time (Teach → Learn → Test), both Education Perfect word lists, Stile Unit 8 vocab (seasons, time, party food, Halloween), generated drills for dates, ordinals, years, time and seasons, and three reading-comprehension texts | Education Perfect (8E German), Stile "Unit 8: Was feiert man in Deutschland?" |
 | Maths | Generated questions for every Term 4 section: 3H–3K percentages, 6A/6B ratios, 6D/6E/6G rates, 8B–8F statistics | Mr Hives' Term 4 planner in the Year 8 Maths OneNote |
-| PSMT lab | Your class survey data (8E, 8G, all Year 8s). You calculate the statistics and the site checks them, then shows the histograms and asks about skew. It also has the report checklist and marking criteria. | DayMap task sheet and the "8E Data collection" spreadsheet |
+| PSMT lab | Your class survey data (8E, 8G, all Year 8s), shown on the page as collected, in order, or as a frequency table. You calculate the statistics and the site checks them, then shows the histograms and asks about skew. It also has the report checklist and marking criteria. | DayMap task sheet and the "8E Data collection" spreadsheet |
 | Boss fights | Timed mock exams for German, statistics and the full Term 4 Maths exam | All of the above |
-| Arcade | Starhop, Orbit Snap, Glow Swarm, Slime Idle, Barry's Barn, Squad Arcade and Timbum | My GitHub Pages games |
+| Arcade | Timbum, Corner to Super, Car Explosion, Drift Legends 3 and Any Pilots On Board? | Web builds on GitHub Pages under `play/`. The private games (Corner to Super, Car Explosion, Drift Legends 3) are built into public `<game>-play` repos that hold only the build. |
+
+## Help while answering
+
+- **I don't know** (or a wrong answer) walks you through the solution one step at a time, then offers a similar question or the full lesson. Vocab asks you to type the word once to lock it in; reading questions point to the sentence in the letter, with its mini dictionary and meaning.
+- **❓ What does this mean?** explains the maths words in the question (median, markup, 2 d.p.…) or shows the letter's mini dictionary.
+- **💡 Hint** shows the next step only. A hinted right answer earns 1 coin.
+- **Type `?`** in any question to open the mini dictionary and the next hint without leaving the question.
+- **🧮 Calculator** and **📝 Working out** (type or draw) on every maths question.
+- **Smart marking.** Answers about meaning are marked on their key words: "8th class", "she's in year 8" and "eight" all match 8, and "the 12th of June" matches 12 June. The right words in a different order count. A small spelling slip counts for English answers; for German answers and maths numbers that are nearly right it says "So close!" and lets you try once more.
+
+## Time studied
+
+Home and the top bar show time studied today, over the last 7 days (with a bar per day) and in total, split into German and Maths. It counts while a question, lesson, read-along or the PSMT lab is open and the tab is visible, and pauses after 90 seconds without a key press or click.
 
 ## Rewards
 
@@ -20,6 +34,19 @@ Live: https://subtoferalsloth11.github.io/exam-prep/
 - Daily quests, level-ups, badges and boss wins give bonus coins.
 - The Arcade unlocks once you get 20 answers right that day. Play time costs 25 coins a minute, about 3 minutes of study per minute of play.
 - Progress is saved in the browser (`localStorage`).
+
+## Updating a game in the Arcade
+
+```
+tools/publish_game.sh <project_dir> <git_ref> <pages_repo>
+tools/publish_game.sh ~/Code/timbum main timbum
+tools/publish_game.sh ~/Code/corner-to-super main corner-to-super-play
+tools/publish_game.sh "~/Code/Car Explosion" main car-explosion-play
+tools/publish_game.sh ~/Code/DL3/dl-3-overhaul dl3-overhaul drift-legends-3-play
+tools/publish_game.sh "~/Code/Friend end-dp" dear-passengers-overhaul any-pilots-on-board
+```
+
+Exports a clean worktree of that commit for the web (Godot 4.7, no threads, so it runs on GitHub Pages) and pushes it to `play/` on the `gh-pages` branch of `<pages_repo>`, creating that repo as public if it doesn't exist. Packs over 90 MB are split into parts (GitHub's file limit is 100 MB) and the page joins them when the game loads. Anything else on the branch, such as Timbum's trailer page, is left alone.
 
 ## Run locally
 
