@@ -108,3 +108,5 @@ table.dict td { padding: 4px 8px; }
 .databox { max-height: 220px; overflow: auto; font-variant-numeric: tabular-nums; }
 .databox.nums { line-height: 1.9; word-spacing: 4px; }
 @media (max-width: 700px) { .hud { margin-left: 0; } .play .q { font-size: 20px; } }
+.choices { counter-reset: opt; }
+.choices button::before { counter-increment: opt; content: counter(opt); display: inline-block; min-width: 1.6em; margin-right: 10px; padding: 0 6px; text-align: center; border-radius: 6px; background: var(--panel); color: var(--muted, #9aa); font-size: 15px; }

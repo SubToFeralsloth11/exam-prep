@@ -262,6 +262,23 @@ function drawTools() {
   }
 }
 
+// Keyboard: 1-4 picks a multiple-choice answer; when the calculator is open, number/operator keys
+// typed outside a text box go into it (Enter = work it out).
+addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target, typing = t.matches?.('input, textarea');
+  if (typing) return;
+  const btns = [...view.querySelectorAll('.choices button')];
+  if (/^[1-9]$/.test(e.key) && btns.length) {
+    const b = btns[Number(e.key) - 1];
+    if (b && !b.disabled) { e.preventDefault(); e.stopImmediatePropagation(); b.click(); }
+    return;
+  }
+  const inp = $('#calc-in'); if (!inp) return;
+  const map = { '*': '×', x: '×', '/': '÷', '-': '−' };
+  if (/^[0-9.+()^%]$/.test(e.key) || map[e.key]) { e.preventDefault(); inp.value += map[e.key] || e.key; tools.expr = inp.value; inp.focus(); }
+}, true);
+
 function tickTimer() {
   const s = session; clearInterval(s.timer);
   const left = () => Math.max(0, s.boss.seconds - Math.floor((Date.now() - s.start) / 1000));
@@ -536,19 +553,25 @@ function german() {
   view.querySelectorAll('[data-r]').forEach((b) => { const r = READINGS[b.dataset.r]; b.onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length }); });
 }
 
-// Flashcards: flip, then rate yourself. Small XP, no coins (coins are for recall, not peeking).
+// Flashcards: pick the meaning out of 4 (press 1-4). Small XP, no coins (coins are for recall, not peeking).
 function learn(list) {
   studying = 'german';
-  const words = shuffle(GERMAN[list]); let i = 0, flipped = false;
+  const all = GERMAN[list], words = shuffle(all); let i = 0;
   const draw = () => {
     if (i >= words.length) { reward(20, 0, `📚 Finished learning ${list}. Now test yourself for coins!`); return german(); }
     const [de, en] = words[i];
-    view.innerHTML = `<div class="play"><a href="#german" class="muted">✕ ${esc(list)}</a><p class="muted">${i + 1} / ${words.length} — click the card to flip</p>
-      <div class="flash"><div class="face" id="face">${esc(flipped ? en : de)}</div></div>
-      <div class="row" style="margin-top:14px"><button class="btn alt" id="again">Again</button><button class="btn good" id="got">Got it →</button></div></div>`;
-    $('#face').onclick = () => { flipped = !flipped; draw(); };
-    $('#again').onclick = () => { words.push(words[i]); i++; flipped = false; draw(); };
-    $('#got').onclick = () => { i++; flipped = false; S.xp += 1; save(); hud(); draw(); };
+    const opts = shuffle([en, ...shuffle([...new Set(all.map((x) => x[1]).filter((x) => x !== en))]).slice(0, 3)]);
+    view.innerHTML = `<div class="play"><a href="#german" class="muted">✕ ${esc(list)}</a><p class="muted">${i + 1} / ${words.length} — press 1, 2, 3 or 4</p>
+      <div class="flash"><div class="face" style="cursor:default">${esc(de)}</div></div>
+      <div class="choices">${opts.map((o) => `<button>${esc(o)}</button>`).join('')}</div><div class="feedback" id="fb"></div></div>`;
+    view.querySelectorAll('.choices button').forEach((b) => (b.onclick = () => {
+      const ok = b.textContent === en;
+      view.querySelectorAll('.choices button').forEach((x) => { x.disabled = true; if (x.textContent === en) x.classList.add('right'); });
+      if (ok) { S.xp += 1; save(); hud(); } else { b.classList.add('wrong'); words.push(words[i]); }
+      i++;
+      $('#fb').innerHTML = ok ? '<b class="done">✔ Yes!</b> ' : `<b style="color:var(--bad)">✘ "${esc(de)}" means "${esc(en)}".</b> It'll come back later. `;
+      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.onclick = draw; $('#fb').appendChild(nb); nb.focus();
+    }));
   };
   draw();
 }
