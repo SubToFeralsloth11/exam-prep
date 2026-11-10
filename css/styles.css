@@ -204,3 +204,12 @@ td input { width: 90px; }
   .boss { width: 46px; height: 46px; font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* do this next, hear it */
+.next-step { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0 20px; border-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--panel)); }
+.next-step h2 { margin: 8px 0 4px; }
+.next-step p { margin: 0; }
+.next-step .btn { flex: none; padding: 12px 22px; }
+.dict .say { cursor: pointer; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+.dict .say:hover { color: var(--accent-hi); }
+.btn.hear { padding: 6px 12px; font-size: 14px; }
+@media (max-width: 700px) { .next-step { flex-direction: column; align-items: flex-start; } }

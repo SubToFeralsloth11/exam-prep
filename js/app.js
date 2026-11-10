@@ -18,6 +18,16 @@ const level = (xp = S.xp) => Math.floor(Math.sqrt(xp / 60)) + 1;
 const xpFor = (l) => 60 * (l - 1) ** 2;
 
 const $ = (sel, el = document) => el.querySelector(sel);
+// German pronunciation through the browser's built-in voices. Any element with data-say reads its text.
+function speak(text) {
+  if (!('speechSynthesis' in window)) return toast('This browser can\'t read aloud.');
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text), voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith('de'));
+  u.lang = 'de-DE'; u.rate = 0.85; if (voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+const hearBtn = (text) => `<button class="btn alt hear" data-say="${esc(text)}">Hear it</button>`;
+document.addEventListener('click', (e) => { const b = e.target.closest?.('[data-say]'); if (b) { e.stopPropagation(); speak(b.dataset.say); } });
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const view = $('#view');
 
@@ -112,7 +122,8 @@ const tools = { calc: false, work: false, expr: '' };
 const WORK_KEY = 'examquest.work.';
 const stepList = (q) => (q.teach ? q.teach() : Array.isArray(q.steps) ? q.steps : String(q.steps || '').split(/(?<=[.!?])\s+|;\s+/)).filter(Boolean);
 const stepHtml = (x) => (typeof x === 'string' ? esc(x) : x.html);
-const dictTable = (rows) => `<table class="dict">${rows.map(([de, en]) => `<tr><td><b>${esc(de)}</b></td><td>${esc(en)}</td></tr>`).join('')}</table>`;
+// German words in a mini dictionary can be clicked to hear them (maths terms are English, so not).
+const dictTable = (rows, say = true) => `<table class="dict">${rows.map(([de, en]) => `<tr><td><b${say ? ` class="say" data-say="${esc(de)}" title="Click to hear it"` : ''}>${esc(de)}</b></td><td>${esc(en)}</td></tr>`).join('')}</table>`;
 
 function play({ title, next, limit = 20, boss = null, onEnd }) {
   session = { title, next, limit, boss, onEnd, n: 0, right: 0, combo: 0, q: null, locked: false, hp: boss ? boss.hp : 0, hearts: boss ? 3 : 0, start: Date.now(), wrongs: [], pending: null, advance: null };
@@ -146,7 +157,7 @@ function ask() {
       </div>
       <div class="bar" style="margin-top:8px"><i style="width:${Math.min(1, s.n / s.limit) * 100}%"></i></div>
       ${s.boss ? `<div class="bossbar"><div class="boss" id="boss">${s.boss.icon}</div><div class="bossinfo"><div class="row" style="justify-content:space-between"><b>${esc(s.boss.name)}</b><span class="small muted">${s.hp} / ${s.boss.hp} HP</span></div><div class="hp"><i style="width:${(s.hp / s.boss.hp) * 100}%"></i></div><div class="row small muted" style="justify-content:space-between;margin-top:6px"><span class="lives">Lives ${'<i class="on"></i>'.repeat(s.hearts)}${'<i></i>'.repeat(3 - s.hearts)}</span><span id="timer"></span></div></div></div>` : ''}
-      ${q.passage ? `<details open><summary class="muted">The letter</summary><div class="passage">${esc(q.passage)}</div></details>` : ''}
+      ${q.passage ? `<details open><summary class="muted">The letter</summary><div class="passage">${esc(q.passage)}</div><div class="row" style="margin-top:6px">${hearBtn(q.passage)}</div></details>` : ''}
       <div class="q">${esc(q.prompt)}</div>
       <div class="row tools">
         ${terms.length || q.dict ? '<button class="tool" id="t-means">What does this mean?</button>' : ''}
@@ -175,7 +186,7 @@ function ask() {
   const help = $('#helpbox');
   help.innerHTML = '<div id="h-means"></div><div id="h-hints"></div>';
   const showMeans = () => {
-    $('#h-means').innerHTML = `<div class="card help"><b>Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
+    $('#h-means').innerHTML = `<div class="card help"><b>Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms, false)}` : ''}${q.dict ? `<p class="small muted">Click a German word to hear it.</p>${dictTable(q.dict)}` : ''}</div>`;
   };
   const showHint = () => {
     const steps = stepList(q); if (s.locked || s.hint >= steps.length - 1) return false;
@@ -309,13 +320,14 @@ function answer(input, btn) {
     const mult = s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1, coins = q.hinted ? 1 : 2 * mult;
     reward(res === 'right' || res === 'order' ? 10 : res === 'typo' ? 8 : 6, coins);
     if (q.id) S.mastery[q.id] = Math.min(5, (S.mastery[q.id] || 0) + 1);
+    noteMistake(q, false);
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; t.right++; }
     if (s.boss) { s.hp--; const b = $('#boss'); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 150); }
     fb.innerHTML = res === 'right'
       ? `<b class="done">Correct</b> +${coins} coins ${mult > 1 && !q.hinted ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${stepList(q).length && !q.teach ? `<div class="muted small">${stepList(q).map(stepHtml).join(' → ')}</div>` : ''}`
       : res === 'order' ? `<b class="done">Right</b> +${coins} coins <span class="muted">Same words, different order. The usual way: <b>${esc(q.answer)}</b></span>`
       : res === 'typo' ? `<b class="done">Right</b> +${coins} coins <span style="color:var(--warn)">Watch the spelling: <b>${esc(q.answer)}</b></span>`
-        : `<b style="color:var(--warn)">≈ Almost — check your umlauts/ß:</b> ${esc(q.answer)}`;
+        : `<b style="color:var(--warn)">Almost. Check your umlauts and ß:</b> ${esc(q.answer)}`;
     const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next'; nb.style.marginTop = '10px'; nb.onclick = ask;
     fb.appendChild(document.createElement('br')); fb.appendChild(nb); nb.focus();
     s.advance = ask;
@@ -323,6 +335,7 @@ function answer(input, btn) {
   } else {
     s.combo = 0; s.wrongs.push(q);
     if (q.id) S.mastery[q.id] = 0;
+    noteMistake(q, true);
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; }
     if (s.boss) s.hearts--;
     walkthrough(fb, q, input.trim() ? 'Not quite. Let\'s work it out together, one step at a time.' : 'No worries. Here\'s how to do it, one step at a time.');
@@ -401,8 +414,9 @@ function vocabQ(list, dir, word) {
   const id = `v:${dir}:${de}`;
   const art = de.match(/^(der|die|das) /)?.[1];
   const tip = art ? `It's a "${art}" word. Learn der/die/das together with the noun: ${de}.` : '';
-  if (dir === 'de-en') return { id, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', lenient: true, answer: en, retype: en, check: (i) => checkMeaning(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
-  return { id, subject: 'german', topic: list, prompt: `How do you say "${en}" in German?`, kind: 'text', keys: true, answer: de, retype: de, check: (i) => checkGerman(i, [de]), steps: tip, teach: () => [`"${en}" in German is "${de}".`, tip].filter(Boolean) };
+  const redo = { v: [list, dir, de] };
+  if (dir === 'de-en') return { id, redo, subject: 'german', topic: list, prompt: `What does "${de}" mean in English?`, kind: 'text', lenient: true, answer: en, retype: en, check: (i) => checkMeaning(i, variants(en)), steps: '', teach: () => [`"${de}" means "${en}".`, tip].filter(Boolean) };
+  return { id, redo, subject: 'german', topic: list, prompt: `How do you say "${en}" in German?`, kind: 'text', keys: true, answer: de, retype: de, check: (i) => checkGerman(i, [de]), steps: tip, teach: () => [`"${en}" in German is "${de}".`, tip].filter(Boolean) };
 }
 
 // Leitner-style queue: weakest words first, wrong words come back 3 questions later.
@@ -418,10 +432,10 @@ function vocabNext(list, dir) {
   };
 }
 
-function drillNext(name) {
-  const make = () => { const d = DRILLS[name](); return { subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkMeaning(i, d.a), steps: d.steps, similar: make }; };
-  return make;
+function drillQ(name, d = DRILLS[name]()) {
+  return { redo: { d: name, g: d }, subject: 'german', topic: name, prompt: d.q, kind: 'text', keys: true, answer: d.a[0], check: (i) => checkMeaning(i, d.a), steps: d.steps, similar: () => drillQ(name) };
 }
+const drillNext = (name) => () => drillQ(name);
 
 // The pieces of the letter a reading question is about: the one sharing the most words with the
 // explanation and accepted answers, plus any piece that literally contains an answer (e.g. the
@@ -434,24 +448,24 @@ function findChunks(chunks, q) {
   return hasAnswer(best) ? [best] : [best, ...chunks.filter((c) => c !== best && hasAnswer(c)).slice(0, 1)];
 }
 
-function readingNext(r) {
-  const order = shuffle(r.qs), chunks = READ_ALONG[r.title] || [];
+function readingQ(r, q) {
+  const chunks = READ_ALONG[r.title] || [];
   const dict = [...new Map(chunks.flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
-  return (s) => {
-    const q = order[s.n % order.length];
-    const found = chunks.length ? findChunks(chunks, q) : [];
-    return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', lenient: true, answer: q[1][0], steps: q[2],
-      teach: found.length ? () => [
-        { html: `Find the part${found.length > 1 ? 's' : ''} of the letter this is about:${found.map((c) => `<div class="quote">${esc(c[0])}</div>`).join('')}` },
-        { html: `Mini dictionary for that:${dictTable(found.flatMap((c) => c[2]))}` },
-        `In English: ${found.map((c) => `"${c[1]}"`).join(' ... ')}`, q[2]] : null,
-      check: (i) => checkMeaning(i, q[1]) };
-  };
+  const found = chunks.length ? findChunks(chunks, q) : [];
+  return { redo: { r: [r.title, r.qs.indexOf(q)] }, subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', lenient: true, answer: q[1][0], steps: q[2],
+    teach: found.length ? () => [
+      { html: `Find the part${found.length > 1 ? 's' : ''} of the letter this is about:${found.map((c) => `<div class="quote">${esc(c[0])}</div>`).join('')}` },
+      { html: `Mini dictionary for that:${dictTable(found.flatMap((c) => c[2]))}` },
+      `In English: ${found.map((c) => `"${c[1]}"`).join(' ... ')}`, q[2]] : null,
+    check: (i) => checkMeaning(i, q[1]) };
+}
+function readingNext(r) {
+  const order = shuffle(r.qs);
+  return (s) => readingQ(r, order[s.n % order.length]);
 }
 
-function mathsQ(topic) {
-  const g = TOPICS[topic]();
-  return { subject: 'maths', topic, prompt: g.q, kind: g.choices ? 'mc' : 'text', choices: g.choices, answer: g.a, steps: g.steps, similar: () => mathsQ(topic),
+function mathsQ(topic, g = TOPICS[topic]()) {
+  return { redo: { m: topic, g }, subject: 'maths', topic, prompt: g.q, kind: g.choices ? 'mc' : 'text', choices: g.choices, answer: g.a, steps: g.steps, similar: () => mathsQ(topic),
     check: (i) => (g.choices ? (i === g.a ? 'right' : 'wrong') : checkMaths(i, g.a) ? 'right' : nearMaths(i, g.a) ? 'close' : 'wrong') };
 }
 const mixedMaths = (topics) => () => mathsQ(topics[Math.floor(Math.random() * topics.length)]);
@@ -464,6 +478,31 @@ const germanMix = () => {
     const rd = READINGS[Math.floor(Math.random() * READINGS.length)]; return readingNext(rd)({ n: Math.floor(Math.random() * 20) });
   };
 };
+
+// ---------- my mistakes ----------
+// Every question you get wrong is saved (as the exact question, so it can be asked again) until you
+// get it right, here or anywhere else.
+const mistakeKey = (r) => JSON.stringify(r.v || r.r || [r.d || r.m, r.g?.q]);
+function noteMistake(q, wrong) {
+  if (!q.redo) return;
+  const k = mistakeKey(q.redo);
+  S.mistakes = (S.mistakes || []).filter((m) => mistakeKey(m) !== k);
+  if (wrong) S.mistakes.push(q.redo);
+}
+function redoQ(r) {
+  if (r.v) { const [list, dir, de] = r.v; const w = GERMAN[list]?.find((x) => x[0] === de); return w && vocabQ(list, dir, w); }
+  if (r.r) { const rd = READINGS.find((x) => x.title === r.r[0]); return rd?.qs[r.r[1]] && readingQ(rd, rd.qs[r.r[1]]); }
+  if (r.d) return DRILLS[r.d] && drillQ(r.d, r.g);
+  if (r.m) return TOPICS[r.m] && mathsQ(r.m, r.g);
+  return null;
+}
+const mistakesOf = (subject) => (S.mistakes || []).filter((m) => (subject === 'maths') === !!m.m);
+function mistakesRound(subject) {
+  const list = shuffle(subject ? mistakesOf(subject) : [...(S.mistakes || [])]);
+  if (!list.length) return toast('No mistakes saved. Nice.');
+  let i = 0;
+  play({ title: 'My mistakes', limit: list.length, next: () => { while (i < list.length) { const q = redoQ(list[i++]); if (q) return q; } return null; } });
+}
 
 // ---------- pages ----------
 function countdown(due) {
@@ -496,6 +535,7 @@ function home() {
   view.innerHTML = `
     <h1>G'day Thomas</h1>
     <p class="muted">Study to earn coins, then spend them on your own games in the Arcade. Content synced from your DayMap, Stile, Education Perfect and Maths OneNote on 8 Nov.</p>
+    ${(() => { const n = nextStep(); return `<div class="card next-step"><div><div class="pill">Do this next</div><h2>${esc(n.title)}</h2><p class="muted">${esc(n.why)}</p></div><button class="btn" id="next-step">Start</button></div>`; })()}
     <div class="grid">${[...EXAMS].sort((a, b) => Date.parse(a.due) - Date.parse(b.due)).map((e) => { const days = (Date.parse(e.due) - Date.now()) / 864e5; return `
       <div class="card exam ${days < 4 ? 'urgent' : ''}"><div class="pill">${e.subject}</div><h3 style="margin-top:6px">${esc(e.name)}</h3>
       <div class="big">${countdown(e.due)}</div><div class="small muted">${new Date(e.due).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Australia/Brisbane' })}</div>
@@ -514,6 +554,7 @@ function home() {
       <div class="card click" data-go="ger"><h3>German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
       <div class="card click" data-go="mat"><h3>Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
       <div class="card click" data-go="psmt"><h3>PSMT due Fri 13 Nov</h3><p class="muted small">Check your own survey calculations before you write the report.</p><button class="btn">Open PSMT lab</button></div>
+      <div class="card ${S.mistakes?.length ? 'click' : 'locked'}" data-go="mistakes"><h3>My mistakes (${S.mistakes?.length || 0})</h3><p class="muted small">Every question you got wrong, until you get it right.</p><button class="btn" ${S.mistakes?.length ? '' : 'disabled'}>Redo them</button></div>
     </div>
 
     <h2>Badges (${S.badges.length}/${BADGES.length})</h2>
@@ -523,7 +564,39 @@ function home() {
   view.querySelector('[data-go=mat]').onclick = () => play({ title: 'Mixed Maths', next: mixedMaths(Object.keys(TOPICS)), limit: 20 });
   view.querySelector('[data-go=psmt]').onclick = () => (location.hash = '#psmt');
   view.querySelector('[data-go=teach]').onclick = () => (location.hash = '#teach');
+  view.querySelector('[data-go=mistakes]').onclick = () => mistakesRound();
+  $('#next-step').onclick = () => nextStep().run();
   $('#reset').onclick = () => { if (confirm('Wipe all XP, coins and progress?')) { S = fresh(); save(); route(); } };
+}
+
+// The single most useful thing to do now: work for the nearest exam first (new lessons before
+// practice), then saved mistakes, then flashcards you missed, then your weakest topic.
+function nextStep() {
+  const soon = EXAMS.filter((e) => Date.parse(e.due) > Date.now()).sort((a, b) => Date.parse(a.due) - Date.parse(b.due));
+  const order = [...new Set([...soon.map((e) => e.id), 'ger', 'mat'])];
+  const dueCards = (german) => Object.keys(S.cardsAgain || {}).find((k) => (/^(words|letter):/.test(k) || k === 'reading' || !!DRILLS[k]) === german && studyPack(k).cards);
+  const cardTitle = (k) => studyPack(k).title;
+  for (const id of order) {
+    const exam = EXAMS.find((e) => e.id === id), when = exam ? ` The ${exam.subject} ${id === 'psmt' ? 'PSMT' : 'exam'} is ${countdown(exam.due).toLowerCase() === 'done' ? 'done' : `in ${countdown(exam.due)}`}.` : '';
+    if (id === 'ger') {
+      if (!taught('read:tips')) return { title: 'How to read a German letter', why: `The exam is reading a letter, so start with how to tackle one.${when}`, run: readingTips };
+      const ri = READINGS.findIndex((r) => !taught(`read:${r.title}`));
+      if (ri >= 0) return { title: `Read with me: ${READINGS[ri].title}`, why: `Go through a letter piece by piece with a mini dictionary.${when}`, run: () => readAlong(ri) };
+      if (mistakesOf('german').length) return { title: `Redo your German mistakes (${mistakesOf('german').length})`, why: `Questions you got wrong before. Fix them while they're fresh.${when}`, run: () => mistakesRound('german') };
+      const k = dueCards(true); if (k) return { title: `Flashcards: ${cardTitle(k)}`, why: `You marked some of these "Again" last time.${when}`, run: () => flashcards(k) };
+      const d = Object.keys(DRILLS).find((x) => !taught(x)); if (d) return { title: `Learn: ${d}`, why: `Letters are full of dates, times and numbers.${when}`, run: () => lesson(d) };
+      const ri2 = (S.readNext || 0) % READINGS.length;
+      return { title: `Practise a letter: ${READINGS[ri2].title}`, why: `Read the key words, then answer the questions.${when}`, run: () => { S.readNext = ri2 + 1; save(); readingWords(ri2); } };
+    }
+    if (id === 'psmt' && SURVEY_QUESTIONS.some((_, i) => !S.psmt[i]?.done)) return { title: 'PSMT lab: check your calculations', why: `Get every survey question checked before you write the report.${when}`, run: () => (location.hash = '#psmt') };
+    if (id === 'mat') {
+      const t = Object.keys(TOPICS).find((x) => !taught(x)); if (t) return { title: `Learn: ${t}`, why: `A short lesson, one step at a time, then 5 questions.${when}`, run: () => lesson(t) };
+      if (mistakesOf('maths').length) return { title: `Redo your maths mistakes (${mistakesOf('maths').length})`, why: `The exact questions you got wrong.${when}`, run: () => mistakesRound('maths') };
+      const k = dueCards(false); if (k) return { title: `Flashcards: ${cardTitle(k)}`, why: `You marked some of these "Again" last time.${when}`, run: () => flashcards(k) };
+      const w = weakest('maths'); return { title: `Practise: ${w}`, why: `Your weakest maths topic right now.${when}`, run: () => play({ title: w, next: () => mathsQ(w), limit: 12 }) };
+    }
+  }
+  return { title: 'Mixed German round', why: 'Keep it fresh.', run: () => play({ title: 'Mixed German', next: germanMix(), limit: 20 }) };
 }
 
 function mastery(list) {
@@ -582,7 +655,7 @@ function learn(list) {
     const [de, en] = words[i];
     const opts = shuffle([en, ...shuffle([...new Set(all.map((x) => x[1]).filter((x) => x !== en))]).slice(0, 3)]);
     view.innerHTML = `<div class="play"><a href="#german" class="quit">Exit</a><span class="crumb">${esc(list)}</span><p class="muted">${i + 1} / ${words.length} — press 1, 2, 3 or 4</p>
-      <div class="flash"><div class="face" style="cursor:default">${esc(de)}</div></div>
+      <div class="flash"><div class="face" style="cursor:default">${esc(de)}</div></div><div class="row" style="justify-content:center;margin:8px 0">${hearBtn(de)}</div>
       <div class="choices">${opts.map((o) => `<button>${esc(o)}</button>`).join('')}</div><div class="feedback" id="fb"></div></div>`;
     view.querySelectorAll('.choices button').forEach((b) => (b.onclick = () => {
       const ok = b.textContent === en;
@@ -659,10 +732,14 @@ function tricks(key) {
     $('#back').onclick = () => route();
   });
 }
+// "Again" cards are saved per lesson and come first next time, until you mark them "Got it".
 function flashcards(key) {
-  const p = studyPack(key), queue = shuffle(p.cards.map((c) => [...c]));
+  const p = studyPack(key), saved = new Set((S.cardsAgain ||= {})[key] || []);
+  const queue = [...shuffle(p.cards.filter((c) => saved.has(c[0]))), ...shuffle(p.cards.filter((c) => !saved.has(c[0])))].map((c) => [...c]);
   const total = queue.length; let known = 0, flipped = false;
-  studying = /^(words|letter):/.test(key) || key === 'reading' || DRILLS[key] ? 'german' : 'maths';
+  const german = /^(words|letter):/.test(key) || key === 'reading' || !!DRILLS[key];
+  studying = german ? 'german' : 'maths';
+  const keep = () => { S.cardsAgain[key] = [...saved]; if (!saved.size) delete S.cardsAgain[key]; save(); };
   const draw = () => {
     if (!queue.length) {
       document.onkeydown = null; S.xp += 10; save(); hud();
@@ -673,22 +750,25 @@ function flashcards(key) {
     }
     const [front, back] = queue[0];
     view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(p.title)}: flashcards</span>
-      <p class="muted small" style="margin-top:10px">${known} of ${total} known. Say the answer in your head, then flip.</p><div class="bar"><i style="width:${(known / total) * 100}%"></i></div>
+      <p class="muted small" style="margin-top:10px">${known} of ${total} known.${saved.has(front) ? ' <b style="color:var(--warn)">You missed this one last time.</b>' : ''} Say the answer in your head, then flip.</p><div class="bar"><i style="width:${(known / total) * 100}%"></i></div>
       <div class="flash"><div class="face${flipped ? ' back' : ''}" id="card">${esc(flipped ? back : front).replace(/\n/g, '<br>')}</div></div>
       <div class="row" style="margin-top:12px;justify-content:center">${flipped
         ? '<button class="btn alt" id="again">Again (1)</button><button class="btn" id="got">Got it (2)</button>'
-        : '<button class="btn" id="flip">Flip (Space)</button>'}</div></div>`;
+        : `<button class="btn" id="flip">Flip (Space)</button>${german ? '<button class="btn alt" id="hear">Hear it (H)</button>' : ''}`}</div></div>`;
     $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
     $('#card').onclick = flip;
-    if (flipped) { $('#again').onclick = again; $('#got').onclick = got; } else $('#flip').onclick = flip;
+    if (flipped) { $('#again').onclick = again; $('#got').onclick = got; } else { $('#flip').onclick = flip; if (german) $('#hear').onclick = () => speak(front); }
   };
   const flip = () => { flipped = !flipped; draw(); };
-  const got = () => { queue.shift(); known++; flipped = false; draw(); };
-  const again = () => { queue.push(queue.shift()); flipped = false; draw(); };
+  // Getting a card right after missing it this round still leaves it due next time.
+  const missed = new Set();
+  const got = () => { if (!missed.has(queue[0][0])) saved.delete(queue[0][0]); keep(); queue.shift(); known++; flipped = false; draw(); };
+  const again = () => { missed.add(queue[0][0]); saved.add(queue[0][0]); keep(); queue.push(queue.shift()); flipped = false; draw(); };
   document.onkeydown = (e) => {
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!flipped) flip(); else got(); }
     else if (flipped && e.key === '1') again();
     else if (flipped && e.key === '2') got();
+    else if (german && !flipped && (e.key === 'h' || e.key === 'H')) speak(queue[0][0]);
   };
   draw();
 }
@@ -754,7 +834,7 @@ function readAlong(ri) {
       <p class="muted small" style="margin-top:10px">Piece ${i + 1} of ${chunks.length}. Read the German, use the mini dictionary, try to work out the meaning, then check.</p>
       <div class="bar"><i style="width:${((i + (shown ? 1 : 0.5)) / chunks.length) * 100}%"></i></div>
       ${i ? `<div class="passage faded">${chunks.slice(Math.max(0, i - 2), i).map((c) => esc(c[0])).join(' ')}</div>` : ''}
-      <div class="passage now">${esc(de)}</div>
+      <div class="passage now">${esc(de)}</div><div class="row" style="margin:-4px 0 10px">${hearBtn(de)}</div>
       <div class="card help"><b>Mini dictionary</b>${dictTable(words)}</div>
       ${shown ? `<div class="card"><b>In English:</b> ${esc(en)}</div>` : ''}
       <div class="row" style="margin-top:12px"><button class="btn alt" id="back" ${i || shown ? '' : 'disabled'}>Back</button><button class="btn" id="fwd">${!shown ? 'Show me what it means' : i + 1 < chunks.length ? 'Next piece' : 'Done'}</button></div></div>`;
@@ -783,7 +863,7 @@ function teachWords(list) {
   const meet = () => {
     const grp = groups[g], [de, en] = grp[w], art = de.match(/^(der|die|das) /)?.[1];
     view.innerHTML = `<div class="play">${header()}
-      <div class="flash"><div class="face" style="cursor:default">${esc(de)}<div class="small muted" style="font-weight:400;margin-top:8px">${esc(en)}</div></div></div>
+      <div class="flash"><div class="face" style="cursor:default">${esc(de)}<div class="small muted" style="font-weight:400;margin-top:8px">${esc(en)}</div></div></div><div class="row" style="justify-content:center;margin:8px 0">${hearBtn(de)}</div>
       ${art ? `<p class="small muted center">"${art}" word: learn the der/die/das with it.</p>` : ''}
       ${w ? `<div class="card help"><b>This group so far</b>${dictTable(grp.slice(0, w))}</div>` : ''}
       <div class="row" style="margin-top:12px"><button class="btn" id="fwd">${w + 1 < grp.length ? 'Next word' : 'Quick check on these words'}</button></div></div>`;
@@ -980,15 +1060,18 @@ function choose(game) {
 }
 
 function startGodot(game) {
-  S.godot = { id: game.id, name: game.name, ends: Date.now() + S.playSec * 1000 };
+  const sid = Math.random().toString(36).slice(2, 10);
+  S.godot = { id: game.id, name: game.name, sid, ends: Date.now() + S.playSec * 1000 };
   save();
-  location.href = `devboard://play?dir=${encodeURIComponent(game.godot)}&secs=${S.playSec}&name=${encodeURIComponent(game.name)}`;
+  location.href = `devboard://play?dir=${encodeURIComponent(game.godot)}&secs=${S.playSec}&name=${encodeURIComponent(game.name)}&sid=${sid}`;
   godotSession();
 }
 
 // The game runs outside the browser, so the clock is wall time and keeps going with the tab hidden.
 // DevBoard warns "Save your game" 30 s before the end and then closes Godot. Ending early tells
-// DevBoard to start that 30 s warning now, and those 30 s are charged.
+// DevBoard to start that 30 s warning now, and those 30 s are charged. DevBoard also reports on
+// 127.0.0.1:47620 whether this session's game is still running: if you quit the game yourself, the
+// time you didn't use is kept. If DevBoard can't be reached, the timer just keeps running.
 function godotSession() {
   if ($('.godot-session')) return;
   const wrap = document.createElement('div'); wrap.className = 'modal godot-session';
@@ -1007,6 +1090,19 @@ function godotSession() {
     hud();
     if (!S.playSec) finish('Play time is up. Back to study to earn more.');
   }, 1000);
+  let seen = false;
+  const poll = setInterval(async () => {
+    if (!S.godot) return clearInterval(poll);
+    try {
+      const st = await (await fetch('http://127.0.0.1:47620/game', { cache: 'no-store' })).json();
+      if (st.sid !== S.godot?.sid) return;
+      if (st.running) { seen = true; return; }
+      if (!seen) return;
+      clearInterval(poll);
+      const rest = left(); S.playSec = rest;
+      finish(`${S.godot.name} closed. ${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')} play time kept.`);
+    } catch { /* DevBoard not running or blocked: keep the wall-clock timer */ }
+  }, 3000);
   $('#g-end', wrap).onclick = () => {
     location.href = 'devboard://end';
     const rest = Math.max(0, left() - 30);
