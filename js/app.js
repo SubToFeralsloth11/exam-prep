@@ -580,8 +580,12 @@ function nextStep() {
     const exam = EXAMS.find((e) => e.id === id), when = exam ? ` The ${exam.subject} ${id === 'psmt' ? 'PSMT' : 'exam'} is ${countdown(exam.due).toLowerCase() === 'done' ? 'done' : `in ${countdown(exam.due)}`}.` : '';
     if (id === 'ger') {
       if (!taught('read:tips')) return { title: 'How to read a German letter', why: `The exam is reading a letter, so start with how to tackle one.${when}`, run: readingTips };
-      const ri = READINGS.findIndex((r) => !taught(`read:${r.title}`));
+      const practice = (r) => r.title.startsWith('Practice');
+      const ri = READINGS.findIndex((r) => !practice(r) && !taught(`read:${r.title}`));
       if (ri >= 0) return { title: `Read with me: ${READINGS[ri].title}`, why: `Go through a letter piece by piece with a mini dictionary.${when}`, run: () => readAlong(ri) };
+      // Unseen letters are the real exam skill: straight to the questions, like the exam.
+      const ui = READINGS.findIndex((r) => practice(r) && !S.lessons[`tried:${r.title}`]);
+      if (ui >= 0) return { title: `Unseen letter: ${READINGS[ui].title.replace(/^Practice:\s*/, '')}`, why: `A letter you haven't seen, straight to the questions like the real exam. "What does this mean?" still helps.${when}`, run: () => { S.lessons[`tried:${READINGS[ui].title}`] = 1; save(); play({ title: READINGS[ui].title, next: readingNext(READINGS[ui]), limit: READINGS[ui].qs.length }); } };
       if (mistakesOf('german').length) return { title: `Redo your German mistakes (${mistakesOf('german').length})`, why: `Questions you got wrong before. Fix them while they're fresh.${when}`, run: () => mistakesRound('german') };
       const k = dueCards(true); if (k) return { title: `Flashcards: ${cardTitle(k)}`, why: `You marked some of these "Again" last time.${when}`, run: () => flashcards(k) };
       const d = Object.keys(DRILLS).find((x) => !taught(x)); if (d) return { title: `Learn: ${d}`, why: `Letters are full of dates, times and numbers.${when}`, run: () => lesson(d) };
