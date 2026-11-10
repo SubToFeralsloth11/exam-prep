@@ -2,7 +2,7 @@ import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES
 import { TOPICS, checkMaths, nearMaths, stats } from './maths.js';
 import { DRILLS, checkGerman, checkMeaning, variants } from './german.js';
 import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
-import { TRICKS, WORD_TIPS, WORD_HOOKS, READING_TRICKS } from './tricks.js';
+import { TRICKS, WORD_TIPS, WORD_HOOKS, READING_TRICKS, LETTER_TRICKS, PSMT_TRICKS } from './tricks.js';
 
 // ---------- state ----------
 const KEY = 'examquest.v1';
@@ -542,7 +542,7 @@ function german() {
     <div class="grid">
       <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><div class="row"><button class="btn alt" id="tips">Teach</button>${studyButtons('reading')}</div></div>
       ${READINGS.map((r, i) => `<div class="card"><h3>${tick(`read:${r.title}`)}${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p>
-        <div class="row"><button class="btn alt" data-ra="${i}">Read it with me</button><button class="btn" data-r="${i}">Answer questions</button></div></div>`).join('')}
+        <div class="row"><button class="btn alt" data-ra="${i}">Read it with me</button>${studyButtons(`letter:${i}`)}<button class="btn" data-r="${i}">Answer questions</button></div></div>`).join('')}
     </div>
     <h2>2 · Word lists (exact Education Perfect + Stile lists)</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => { const [m, n] = mastery(l); return `
@@ -622,6 +622,12 @@ const doBox = (d) => (d ? `<div class="do-it"><b>Do this now</b><p>${esc(d)}</p>
 const asCards = (tips) => tips.map((x) => ({ t: x.t, s: x.s, html: doBox(x.do) }));
 function studyPack(key) {
   if (key === 'reading') return { title: 'Reading German letters', tips: READING_TRICKS.tips, cards: READING_TRICKS.cards };
+  if (key === 'psmt') return { title: 'PSMT: comparing data', tips: PSMT_TRICKS.tips, cards: PSMT_TRICKS.cards };
+  if (key.startsWith('letter:')) {
+    const r = READINGS[Number(key.slice(7))];
+    const words = [...new Map((READ_ALONG[r.title] || []).flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
+    return { title: r.title, tips: LETTER_TRICKS[r.title], cards: words };
+  }
   if (key.startsWith('words:')) {
     const list = key.slice(6), words = GERMAN[list], groups = [];
     for (let k = 0; k < words.length; k += 5) groups.push(words.slice(k, k + 5));
@@ -638,8 +644,9 @@ function studyButtons(key) {
   return `<button class="btn alt" data-tricks="${esc(key)}">Tips & tricks</button><button class="btn alt" data-cards="${esc(key)}">Flashcards</button>`;
 }
 function bindStudyButtons() {
-  view.querySelectorAll('[data-tricks]').forEach((b) => (b.onclick = () => tricks(b.dataset.tricks)));
-  view.querySelectorAll('[data-cards]').forEach((b) => (b.onclick = () => flashcards(b.dataset.cards)));
+  const on = (sel, fn) => view.querySelectorAll(sel).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); fn(b); }));
+  on('[data-tricks]', (b) => tricks(b.dataset.tricks));
+  on('[data-cards]', (b) => flashcards(b.dataset.cards));
 }
 function tricks(key) {
   const p = studyPack(key);
@@ -655,7 +662,7 @@ function tricks(key) {
 function flashcards(key) {
   const p = studyPack(key), queue = shuffle(p.cards.map((c) => [...c]));
   const total = queue.length; let known = 0, flipped = false;
-  studying = key.startsWith('words:') || key === 'reading' || DRILLS[key] ? 'german' : 'maths';
+  studying = /^(words|letter):/.test(key) || key === 'reading' || DRILLS[key] ? 'german' : 'maths';
   const draw = () => {
     if (!queue.length) {
       document.onkeydown = null; S.xp += 10; save(); hud();
@@ -811,17 +818,20 @@ function teachWords(list) {
 
 // Every lesson in order, for "I have no idea where to start".
 function teach() {
-  const item = (key, label, attrs) => `<div class="card click" ${attrs}><h3>${taught(key) ? '<span class="pill ok">Done</span> ' : ''}${esc(label)}</h3><p class="small muted">${taught(key) ? 'Done. Click to go over it again.' : 'Not done yet'}</p></div>`;
+  const item = (key, label, attrs, pack) => `<div class="card click" ${attrs}><h3>${taught(key) ? '<span class="pill ok">Done</span> ' : ''}${esc(label)}</h3><p class="small muted">${taught(key) ? 'Done. Click to go over it again.' : 'Not done yet'}</p><div class="row">${studyButtons(pack)}</div></div>`;
   view.innerHTML = `<h1>Teach me</h1>
     <p class="muted">Start here if you have no idea. Every lesson goes one small step at a time, then you practise. Order: <b>Teach</b>, then <b>Learn</b>, then <b>Test</b>.</p>
     <h2>German: reading a letter</h2>
-    <div class="grid">${item('read:tips', 'How to read a German letter', 'data-tips')}${READINGS.map((r, i) => item(`read:${r.title}`, `Read with me: ${r.title}`, `data-ra="${i}"`)).join('')}</div>
+    <div class="grid">${item('read:tips', 'How to read a German letter', 'data-tips', 'reading')}${READINGS.map((r, i) => item(`read:${r.title}`, `Read with me: ${r.title}`, `data-ra="${i}"`, `letter:${i}`)).join('')}</div>
     <h2>German: skills</h2>
-    <div class="grid">${Object.keys(DRILLS).map((d) => item(d, d, `data-teach="${esc(d)}"`)).join('')}</div>
+    <div class="grid">${Object.keys(DRILLS).map((d) => item(d, d, `data-teach="${esc(d)}"`, d)).join('')}</div>
     <h2>German: word lists</h2>
-    <div class="grid">${Object.keys(GERMAN).map((l) => item(`words:${l}`, l, `data-words="${esc(l)}"`)).join('')}</div>
+    <div class="grid">${Object.keys(GERMAN).map((l) => item(`words:${l}`, l, `data-words="${esc(l)}"`, `words:${l}`)).join('')}</div>
+    <h2>Maths: PSMT</h2>
+    <div class="grid"><div class="card"><h3>PSMT: comparing data</h3><p class="small muted">Centre, spread and shape for your report.</p><div class="row">${studyButtons('psmt')}</div></div></div>
     <h2>Maths</h2>
-    <div class="grid">${Object.keys(TOPICS).map((t) => item(t, t, `data-teach="${esc(t)}"`)).join('')}</div>`;
+    <div class="grid">${Object.keys(TOPICS).map((t) => item(t, t, `data-teach="${esc(t)}"`, t)).join('')}</div>`;
+  bindStudyButtons();
   $('[data-tips]').onclick = readingTips;
   view.querySelectorAll('[data-ra]').forEach((c) => (c.onclick = () => readAlong(Number(c.dataset.ra))));
   view.querySelectorAll('[data-teach]').forEach((c) => (c.onclick = () => lesson(c.dataset.teach)));
@@ -889,6 +899,7 @@ function psmt() {
   view.innerHTML = `
     <h1>PSMT lab – ${esc(PSMT.question)}</h1>
     <p class="muted">Due <b>Fri 13 Nov</b> on DayMap. ${esc(PSMT.rules)}</p>
+    <div class="row" style="margin-bottom:12px">${studyButtons('psmt')}</div>
     <div class="row">${SURVEY_QUESTIONS.map((q, i) => `<a class="btn ${i === qi ? '' : 'alt'}" href="#psmt/${i}">Q${i + 1}: ${esc(q)}${S.psmt[i]?.done ? ' (done)' : ''}</a>`).join('')}</div>
     <h2>The data</h2>
     <p class="small muted">Your class survey answers for "${esc(SURVEY_QUESTIONS[qi])}" (from "8E Data collection (Hives)(1-196).xlsx"). Each number is one student.</p>
@@ -923,6 +934,7 @@ function psmt() {
     if (GROUPS.every((_, i) => st.shapes[i] === skew(truth[i].xs)) && !st.done) { st.done = true; reward(80, 60, `PSMT question ${qi + 1} complete. +60 coins`); }
     save(); checkBadges(); psmt();
   }));
+  bindStudyButtons();
 }
 
 // ---------- bosses ----------

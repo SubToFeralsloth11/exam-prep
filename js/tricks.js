@@ -569,3 +569,57 @@ export const READING_TRICKS = {
     ['Wie geht es dir?', 'How are you?'],
   ],
 };
+
+// One pack per reading letter (keys are READINGS titles). Cards come from the letter's mini
+// dictionary in teach.js READ_ALONG; these add the tricks for that letter.
+export const LETTER_TRICKS = {
+  'Brief von Maike (Stile Week 1)': [
+    { t: 'Who is who', s: ['The letter starts "Hallo," and ends "Schreib mir bald, Maike".', 'The name at the bottom wrote it: Maike.', '"Meine Familie nennt mich Fritz" = my family calls me Fritz. Fritz is only her Spitzname (nickname), not her real name.'], do: 'Write "Maike = real name, Fritz = nickname (Spitzname)" in your book.' },
+    { t: 'Age and year level', s: ['"Ich bin vierzehn Jahre alt" = I am 14 years old.', 'Trick: vier + zehn = four + ten = 14.', '"die achte Klasse" = the eighth class = Year 8. acht = 8.'], do: 'Say out loud: "Ich bin vierzehn Jahre alt. Ich gehe in die achte Klasse." Then say it about yourself.' },
+    { t: 'Two birthdays: the trap', s: ['"Dieses Jahr feiere ich meinen Geburtstag am sechsundzwanzigsten Juni" = this year I celebrate on 26 June.', '"aber mein eigentlicher Geburtstag ist am zwölften Juni" = but my REAL birthday is 12 June.', 'eigentlich = actual / real. "feiern" = celebrate. So: party 26 June, real birthday 12 June.'], do: 'Draw two boxes: "real birthday: 12 June (eigentlicher)" and "party: 26 June (feiere)".' },
+    { t: 'Breaking big numbers', s: ['sechsundzwanzigsten = sechs + und + zwanzig + sten = six-and-twenty = 26th.', 'German says the ones FIRST, then the tens.', 'zwölften = zwölf + ten = 12th.'], do: 'Split these with a pencil line: sechs|und|zwanzig|sten, zwölf|ten.' },
+    { t: 'The birth year', s: ['"Mein Geburtsjahr ist zweitausendneun."', 'Geburt (birth) + Jahr (year) = birth year.', 'zwei-tausend-neun = two thousand nine = 2009.'], do: 'Write 2009 = zweitausendneun three times.' },
+    { t: 'Make it stick', s: ['Every question about this letter is about Maike: name, nickname, age, year level, two dates and birth year.', 'Seven facts. If you can say all seven, you know the letter.'], do: 'Cover the letter and write the seven facts from memory: Maike, Fritz, 14, Year 8, 12 June, 26 June, 2009.' },
+  ],
+  'Inas Einladung (Stile Week 4)': [
+    { t: 'Who wrote it, who is it to', s: ['Top: "Liebe Saskia," = Dear Saskia. The letter is TO Saskia.', 'Bottom: "Mit lieben Grüßen, Ina Schmidt". Ina wrote it.', '"feiere ich meinen Geburtstag" = I celebrate MY birthday. "ich" is the writer, so it is Ina\'s birthday.'], do: 'Write "To: Saskia (top). From: Ina (bottom). Birthday: Ina." in your book.' },
+    { t: 'When', s: ['"Am Samstag" = on Saturday. Samstag = Saturday (both start with Sa).', '"den dreiundzwanzigsten Oktober" = drei + und + zwanzig = three-and-twenty = 23rd October.'], do: 'Say out loud: "Samstag, der dreiundzwanzigste Oktober" and tap the 3 then the 20 on the desk.' },
+    { t: 'Start and finish times', s: ['"Es geht um sechzehn Uhr los" = it starts at 16:00. losgehen = to start (go off).', '"dauert bis zweiundzwanzig Uhr" = lasts until 22:00. bis = until.', 'Trick for pm: take away 12. 16 - 12 = 4 pm, 22 - 12 = 10 pm.'], do: 'Write "los = start, bis = until" and "16 Uhr = 4 pm, 22 Uhr = 10 pm".' },
+    { t: 'Food and drink', s: ['"Kuchen" = cake (sounds like "cook-en", something you bake).', '"Kekse" = biscuits (sounds like "cakes", little ones).', '"Pommes frites" = chips. "Spezi" = cola with orange. "Apfelschorle" = apple juice with sparkling water.', '"zu essen" = to eat, "zum Trinken" = to drink.'], do: 'Draw a quick party table with cake, biscuits and chips, and label each with its German word.' },
+    { t: 'Bescheid sagen', s: ['"Bitte sag mir vorher Bescheid, ob du kommen kannst."', 'sag = say. Bescheid sagen = to let someone know.', 'vorher = before(hand). ob = whether / if. kommen kannst = can come.', 'So: Please let me know beforehand whether you can come.'], do: 'Write "Bescheid sagen = let someone know" and make up your own: "Sag mir Bescheid!" = Let me know!' },
+    { t: 'Make it stick', s: ['The questions ask: whose birthday, who is invited, date, day, start, finish, food, and Bescheid sagen.', 'Eight facts: Ina, Saskia, 23 October, Saturday, 16:00, 22:00, cake/biscuits/chips, let me know.'], do: 'Cover the letter and write the eight facts from memory, then check.' },
+  ],
+  'Elenas Party (EP exam list style)': [
+    { t: 'Who is who', s: ['"Lieber Helmut, liebe Lina," = the letter is TO Helmut and Lina.', '"Eure Tochter, die Elena" = YOUR daughter Elena. eure = your (to more than one person).', 'So Elena is Helmut and Lina\'s daughter. The letter is signed only "Liebe Grüße", with no name.'], do: 'Draw a mini family tree: Helmut + Lina, with Elena (Tochter = daughter) under them.' },
+    { t: 'Age and date', s: ['"wird dieses Jahr vierzehn Jahre alt" = turns 14 this year. wird = becomes / is turning.', '"am einunddreißigsten März" = ein + und + dreißig = one-and-thirty = 31st March.'], do: 'Write 14 = vierzehn and 31st = einunddreißigsten, splitting each into its parts.' },
+    { t: 'Where', s: ['"im Kino \'Unter den Linden\'" = at the cinema "Unter den Linden". Kino = cinema.', '"in der Schillerstraße, Nummer siebzehn" = on Schillerstraße, number 17.', 'Straße = street. sieben + zehn = seven + ten = 17.'], do: 'Write the address like an envelope: Kino "Unter den Linden", Schillerstraße 17.' },
+    { t: 'What happens', s: ['"Wir wollen einen Film sehen" = we want to watch a film. That comes FIRST.', '"und dann gibt es leckeres Essen" = and THEN there is tasty food. dann = then.', 'Food: Kartoffelsalat (potato salad), Wurst (sausage), Apfelstrudel, Schokoladenkuchen (chocolate cake).', 'Drink: Apfelsaft = apple juice (Apfel = apple, Saft = juice).'], do: 'Number the plan: 1 film, 2 food. Label each food with its German word.' },
+    { t: 'The time trap: halb', s: ['"Die Party beginnt um halb sechs."', 'halb sechs is half TO six, not half past six.', 'So it starts at 5:30 (17:30).'], do: 'Draw a clock showing 5:30 and write "halb sechs = half way to six" under it.' },
+    { t: 'Make it stick', s: ['The questions ask: age, who Elena is, date, place, address, start time, what they do first, and the drink.', 'Eight facts: 14, daughter, 31 March, cinema, Schillerstraße 17, 5:30, watch a film, apple juice.'], do: 'Cover the letter and write the eight facts from memory, then check.' },
+  ],
+};
+
+export const PSMT_TRICKS = {
+  tips: [
+    { t: 'What the task wants', s: ['Question: is 8E the "average" Year 8 class?', 'You compare 8E with another class (8G) and with all Year 8s.', 'You compare three things: centre (mean, median, mode), spread (range) and shape (skew).'], do: 'Write the three words CENTRE, SPREAD, SHAPE at the top of a page. Every paragraph uses one of them.' },
+    { t: 'Order before median', s: ['The median is the middle once the data is IN ORDER.', 'Use the "In order" button on the PSMT page before you look for it.', 'Even count? Average the two middle numbers.'], do: 'Take 5 numbers from your data, put them in order on paper and circle the middle one.' },
+    { t: 'Mean vs median', s: ['One huge value (like $7000 in the bank) drags the mean up a lot.', 'The median hardly moves.', 'So for bank money, the median is the fairer "middle". Say that in your report.'], do: 'Write one sentence: "The mean bank balance is higher than the median because a few students have very large balances."' },
+    { t: 'Shape words', s: ['Long tail to the right = positively skewed. Long tail to the left = negatively skewed. Even = symmetric.', 'Trick: the tail points the way. Tail points right (positive side of a number line) = positive.'], do: 'Sketch a histogram with a tail to the right and label it "positively skewed".' },
+    { t: 'Comparing with numbers', s: ['Do not just say "similar". Say by how much.', 'Example: "8E\'s mean sleep is 8.1 hours, 0.3 hours less than all Year 8s (8.4)."'], do: 'Write one comparison sentence for each of centre and spread, each with two numbers and the difference.' },
+    { t: 'Make it stick', s: ['Evaluate: sample size, honesty, rounding to whole numbers, outliers.', 'Conclude: answer the question, yes or no, backed by your numbers.'], do: 'Write your one-line conclusion now, then check it against your numbers.' },
+  ],
+  cards: [
+    ['mean', 'add them all up, divide by how many'],
+    ['median', 'the middle value once in order'],
+    ['mode', 'the most common value'],
+    ['range', 'highest minus lowest'],
+    ['outlier', 'a value far from the rest'],
+    ['positively skewed', 'long tail to the right; mean pulled above the median'],
+    ['negatively skewed', 'long tail to the left; mean pulled below the median'],
+    ['symmetric', 'both sides look the same'],
+    ['discrete data', 'counted, whole numbers (siblings)'],
+    ['continuous data', 'measured, any value (hours of sleep)'],
+    ['sample', 'only some of the population is asked'],
+    ['limitation', 'something that makes the data less trustworthy'],
+  ],
+};
