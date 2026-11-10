@@ -557,7 +557,20 @@ function german() {
   bindStudyButtons();
   view.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => play({ title: b.dataset.d, next: drillNext(b.dataset.d), limit: 15 })));
   view.querySelectorAll('[data-ra]').forEach((b) => (b.onclick = () => readAlong(Number(b.dataset.ra))));
-  view.querySelectorAll('[data-r]').forEach((b) => { const r = READINGS[b.dataset.r]; b.onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length }); });
+  view.querySelectorAll('[data-r]').forEach((b) => (b.onclick = () => readingWords(Number(b.dataset.r))));
+}
+
+// Before the questions: every word the letter needs, so no question asks about a word you've never seen.
+function readingWords(ri) {
+  const r = READINGS[ri], words = [...new Map((READ_ALONG[r.title] || []).flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
+  const go = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length });
+  if (!words.length) return go();
+  view.innerHTML = `<div class="play"><a href="#german" class="quit">Exit</a><span class="crumb">${esc(r.title)}</span>
+    <h1 style="margin-top:14px">Key words first</h1><p class="muted">These are the words the questions need. Read down the list, say each German word out loud, and write down any you didn't know.</p>
+    <div class="card">${dictTable(words)}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="go">I've read them, start the questions</button><button class="btn alt" id="ra">Read the letter with me first</button></div></div>`;
+  $('#go').onclick = go;
+  $('#ra').onclick = () => readAlong(ri);
 }
 
 // Flashcards: pick the meaning out of 4 (press 1-4). Small XP, no coins (coins are for recall, not peeking).

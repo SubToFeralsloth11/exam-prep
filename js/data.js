@@ -868,14 +868,22 @@ export const READINGS = [
     "Kuchen, Kekse, Pommes frites"
    ],
    [
-    "Ina asks Saskia to \"Bescheid sagen\". What does that mean?",
+    "Ina writes: \"Bitte sag mir vorher Bescheid, ob du kommen kannst.\" (sag = say, vorher = before, ob du kommen kannst = if you can come). What does Ina want Saskia to do?",
     [
      "let me know",
+     "let her know",
      "let someone know",
      "tell me",
-     "to let someone know"
+     "tell her",
+     "reply",
+     "rsvp",
+     "tell her if she can come",
+     "let her know if she can come",
+     "say if she can come",
+     "please let me know beforehand whether you can come",
+     "please let me know before if you can come"
     ],
-    "Bescheid sagen = to let someone know"
+    "Bescheid sagen = to let someone know. Ina wants Saskia to let her know beforehand whether she can come."
    ]
   ]
  },
