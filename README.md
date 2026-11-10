@@ -13,7 +13,16 @@ Live: https://subtoferalsloth11.github.io/exam-prep/
 | Maths | Generated questions for every Term 4 section: 3H–3K percentages, 6A/6B ratios, 6D/6E/6G rates, 8B–8F statistics | Mr Hives' Term 4 planner in the Year 8 Maths OneNote |
 | PSMT lab | Your class survey data (8E, 8G, all Year 8s), shown on the page as collected, in order, or as a frequency table. You calculate the statistics and the site checks them, then shows the histograms and asks about skew. It also has the report checklist and marking criteria. | DayMap task sheet and the "8E Data collection" spreadsheet |
 | Boss fights | Timed mock exams for German, statistics and the full Term 4 Maths exam | All of the above |
-| Arcade | Timbum, Corner to Super, Car Explosion, Drift Legends 3 and Any Pilots On Board? | Web builds on GitHub Pages under `play/`. The private games (Corner to Super, Car Explosion, Drift Legends 3) are built into public `<game>-play` repos that hold only the build. |
+| Arcade | Timbum, Corner to Super, Car Explosion, Drift Legends 3, Any Pilots On Board? and Cook Up Anything | Each game opens **in the site** (web builds on GitHub Pages under `play/`; the private games are built into public `<game>-play` repos that hold only the build) or **in Godot** through DevBoard (`devboard://play`), which warns "Save your game" 30 seconds before play time runs out and then closes it. Cook Up Anything is Godot-only. If you quit the Godot game yourself, DevBoard's status endpoint tells the site and the unused time is kept. |
+
+## Studying
+
+- **Do this next** on Home picks one thing to do now: lessons for the nearest exam first, then your saved mistakes, then flashcards you missed, then your weakest topic.
+- **Tips & tricks** on every lesson (maths topics, German skills, word lists, each letter, PSMT) only teaches: memory tricks, traps and a "Do this now" task such as writing something out or saying it aloud. No questions.
+- **Flashcards** on every lesson flip with Space; 1 = Again, 2 = Got it. Cards marked Again are saved and come first next time until you get them right in a later round.
+- **My mistakes** keeps every question you got wrong (the exact question) until you answer it right, here or anywhere else.
+- **Hear it** reads German aloud with the browser's German voice: flashcards (or press H), word teaching, read-alongs, the letter in reading questions, and any German word in a mini dictionary.
+- **Key words first**: before a letter's questions, the words they need are listed.
 
 ## Help while answering
 
