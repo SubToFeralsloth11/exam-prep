@@ -854,7 +854,60 @@ function arcade() {
       <span class="row">${[5, 10, 15].map((m) => `<button class="btn gold" data-buy="${m}" ${S.coins < m * PER_MIN ? 'disabled' : ''}>Buy ${m} min (${m * PER_MIN} 🪙)</button>`).join('')}</span></div>
     <div class="grid" style="margin-top:16px">${GAMES.map((g) => `<div class="card ${open && S.playSec > 0 ? 'click' : 'locked'}" data-g="${g.id}"><h3>🎮 ${esc(g.name)}</h3><p class="small muted">${open ? (S.playSec > 0 ? 'Click to play' : 'Buy play time first') : '🔒 Study first'}</p></div>`).join('')}</div>`;
   view.querySelectorAll('[data-buy]').forEach((b) => (b.onclick = () => { const m = Number(b.dataset.buy); if (S.coins < m * PER_MIN) return; S.coins -= m * PER_MIN; S.playSec += m * 60; save(); hud(); arcade(); }));
-  view.querySelectorAll('[data-g]').forEach((c) => (c.onclick = () => { if (!open || S.playSec <= 0) return toast(open ? 'Buy play time first 🪙' : 'Get 20 answers right today to unlock 🔒'); launch(GAMES.find((g) => g.id === c.dataset.g)); }));
+  view.querySelectorAll('[data-g]').forEach((c) => (c.onclick = () => { if (!open || S.playSec <= 0) return toast(open ? 'Buy play time first 🪙' : 'Get 20 answers right today to unlock 🔒'); choose(GAMES.find((g) => g.id === c.dataset.g)); }));
+  if (S.godot && S.godot.ends > Date.now()) godotSession();
+}
+
+// Pick where to play. Godot runs the real project on this Mac through DevBoard (devboard:// link);
+// games without a web build are Godot-only.
+function choose(game) {
+  if (!game.url) return startGodot(game);
+  if (!game.godot) return launch(game);
+  const wrap = document.createElement('div'); wrap.className = 'modal';
+  wrap.innerHTML = `<div class="card"><h2>${esc(game.name)}</h2><p class="muted">Where do you want to play?</p>
+    <div class="row"><button class="btn" id="in-godot">Open in Godot</button><button class="btn alt" id="in-site">Play in site</button><button class="btn alt" id="cancel">Cancel</button></div></div>`;
+  document.body.appendChild(wrap);
+  const done = () => wrap.remove();
+  $('#in-godot', wrap).onclick = () => { done(); startGodot(game); };
+  $('#in-site', wrap).onclick = () => { done(); launch(game); };
+  $('#cancel', wrap).onclick = done;
+  wrap.onclick = (e) => { if (e.target === wrap) done(); };
+}
+
+function startGodot(game) {
+  S.godot = { id: game.id, name: game.name, ends: Date.now() + S.playSec * 1000 };
+  save();
+  location.href = `devboard://play?dir=${encodeURIComponent(game.godot)}&secs=${S.playSec}&name=${encodeURIComponent(game.name)}`;
+  godotSession();
+}
+
+// The game runs outside the browser, so the clock is wall time and keeps going with the tab hidden.
+// DevBoard warns "Save your game" 30 s before the end and then closes Godot. Ending early tells
+// DevBoard to start that 30 s warning now, and those 30 s are charged.
+function godotSession() {
+  if ($('.godot-session')) return;
+  const wrap = document.createElement('div'); wrap.className = 'modal godot-session';
+  wrap.innerHTML = `<div class="card"><h2>Playing ${esc(S.godot.name)} in Godot</h2>
+    <p class="big-num" id="g-left"></p><p class="muted" id="g-msg">DevBoard will remind you to save 30 seconds before your time runs out, then close the game.</p>
+    <p class="small muted">Nothing opened? Make sure DevBoard is running, then allow the link when the browser asks.</p>
+    <div class="row"><button class="btn alt" id="g-end">End now</button></div></div>`;
+  document.body.appendChild(wrap);
+  const left = () => Math.max(0, Math.ceil((S.godot.ends - Date.now()) / 1000));
+  const finish = (msg) => { clearInterval(tick); S.godot = null; save(); hud(); wrap.remove(); if (location.hash === '#arcade') arcade(); toast(msg); };
+  const tick = setInterval(() => {
+    S.playSec = left();
+    $('#g-left', wrap).textContent = `${Math.floor(S.playSec / 60)}:${String(S.playSec % 60).padStart(2, '0')} left`;
+    if (S.playSec <= 30) $('#g-msg', wrap).textContent = 'Save your game. DevBoard is closing it when the timer hits zero.';
+    if (S.playSec % 10 === 0) save();
+    hud();
+    if (!S.playSec) finish('Play time is up. Back to study to earn more.');
+  }, 1000);
+  $('#g-end', wrap).onclick = () => {
+    location.href = 'devboard://end';
+    const rest = Math.max(0, left() - 30);
+    S.godot.ends = Date.now(); S.playSec = rest;
+    finish(`Session ended. The game closes in 30 seconds, save now. ${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')} play time kept.`);
+  };
 }
 
 function launch(game) {
