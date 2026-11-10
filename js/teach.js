@@ -34,7 +34,7 @@ export const LESSONS = {
     { t: 'Units must match', s: ['Example: 50 cm : 2 m.', 'Change to the same unit: 2 m = 200 cm, so 50:200.', 'Divide both by 50: 1:4.'] },
   ],
   '6B Solving ratio problems': [
-    { t: 'Sharing in a ratio', s: ['Example: share $60 in the ratio 2:3.', 'Step 1: add the parts: 2 + 3 = 5 parts.', 'Step 2: one part = 60 ÷ 5 = $12.', 'Step 3: 2 parts = $24 and 3 parts = $36.', 'Check: 24 + 36 = 60 ✔'] },
+    { t: 'Sharing in a ratio', s: ['Example: share $60 in the ratio 2:3.', 'Step 1: add the parts: 2 + 3 = 5 parts.', 'Step 2: one part = 60 ÷ 5 = $12.', 'Step 3: 2 parts = $24 and 3 parts = $36.', 'Check: 24 + 36 = 60, correct.'] },
     { t: 'When you know one side', s: ['Example: boys:girls = 3:4 and there are 15 boys.', 'The boys are 3 parts, so 3 parts = 15 and 1 part = 5.', 'The girls are 4 parts: 4 × 5 = 20 girls.'] },
   ],
   '6D/6E Rates & rate problems': [
@@ -135,7 +135,7 @@ export const READ_ALONG = {
     ['Es wird Kuchen, Kekse und Pommes frites zu essen geben', 'There will be cake, biscuits and chips to eat', [['es wird … geben', 'there will be'], ['der Kuchen', 'cake'], ['die Kekse', 'biscuits'], ['Pommes frites', 'chips / fries'], ['essen', 'to eat']]],
     ['und Spezi und Apfelschorle zum Trinken.', 'and Spezi (cola mixed with orange) and apple spritzer to drink.', [['Spezi', 'cola + orange soft drink'], ['die Apfelschorle', 'apple juice with sparkling water'], ['zum Trinken', 'to drink']]],
     ['Bitte sag mir vorher Bescheid, ob du kommen kannst.', 'Please let me know beforehand whether you can come.', [['bitte', 'please'], ['Bescheid sagen', 'to let someone know'], ['vorher', 'beforehand'], ['ob', 'whether / if'], ['kommen kannst', 'can come']]],
-    ['Mit lieben Grüßen, Ina Schmidt', 'With kind regards, Ina Schmidt (so Ina wrote it, and it\'s Ina\'s birthday)', [['Mit lieben Grüßen', 'with kind regards']]],
+    ['Mit lieben Grüßen, Ina Schmidt', 'With kind regards, Ina Schmidt (so Ina wrote it, and it\'s Ina\'s birthday)', [['Mit lieben Grüßen', 'with kind regards'], ['Ina Schmidt', 'the writer\'s name, signed at the bottom: it\'s her birthday']]],
   ],
   'Elenas Party (EP exam list style)': [
     ['Lieber Helmut, liebe Lina,', 'Dear Helmut, dear Lina, (the letter is to these two people)', [['Lieber / liebe', 'Dear (boy / girl)']]],
