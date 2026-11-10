@@ -2,6 +2,7 @@ import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES
 import { TOPICS, checkMaths, nearMaths, stats } from './maths.js';
 import { DRILLS, checkGerman, checkMeaning, variants } from './german.js';
 import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
+import { TRICKS, WORD_TIPS, WORD_HOOKS, READING_TRICKS } from './tricks.js';
 
 // ---------- state ----------
 const KEY = 'examquest.v1';
@@ -422,13 +423,15 @@ function drillNext(name) {
   return make;
 }
 
-// The piece of the letter a reading question is about: the one sharing the most words with
-// the explanation and accepted answers.
-function findChunk(chunks, q) {
+// The pieces of the letter a reading question is about: the one sharing the most words with the
+// explanation and accepted answers, plus any piece that literally contains an answer (e.g. the
+// signature "Ina Schmidt" for "Whose birthday is it?", which the best-matching piece doesn't name).
+function findChunks(chunks, q) {
   const words = `${q[2]} ${q[1].join(' ')}`.toLowerCase().match(/[a-zäöüß0-9]{3,}/g) || [];
   let best = chunks[0], top = -1;
   for (const c of chunks) { const t = `${c[0]} ${c[1]}`.toLowerCase(); const n = words.filter((w) => t.includes(w)).length; if (n > top) { top = n; best = c; } }
-  return best;
+  const hasAnswer = (c) => q[1].some((a) => a.length >= 3 && new RegExp(`(^|[^a-zäöüß])${a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-zäöüß])`, 'i').test(c[0]));
+  return hasAnswer(best) ? [best] : [best, ...chunks.filter((c) => c !== best && hasAnswer(c)).slice(0, 1)];
 }
 
 function readingNext(r) {
@@ -436,9 +439,12 @@ function readingNext(r) {
   const dict = [...new Map(chunks.flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
   return (s) => {
     const q = order[s.n % order.length];
-    const chunk = chunks.length ? findChunk(chunks, q) : null;
+    const found = chunks.length ? findChunks(chunks, q) : [];
     return { subject: 'german', topic: 'Reading', passage: r.text, dict, prompt: q[0], kind: 'text', lenient: true, answer: q[1][0], steps: q[2],
-      teach: chunk ? () => [{ html: `Find the part of the letter this is about:<div class="quote">${esc(chunk[0])}</div>` }, { html: `Mini dictionary for that part:${dictTable(chunk[2])}` }, `In English: "${chunk[1]}"`, q[2]] : null,
+      teach: found.length ? () => [
+        { html: `Find the part${found.length > 1 ? 's' : ''} of the letter this is about:${found.map((c) => `<div class="quote">${esc(c[0])}</div>`).join('')}` },
+        { html: `Mini dictionary for that:${dictTable(found.flatMap((c) => c[2]))}` },
+        `In English: ${found.map((c) => `"${c[1]}"`).join(' ... ')}`, q[2]] : null,
       check: (i) => checkMeaning(i, q[1]) };
   };
 }
@@ -534,20 +540,21 @@ function german() {
     <p class="muted">The exam is <b>reading comprehension</b>: read a German letter (like an invitation) and answer questions about it. New to something? Do it in this order: <b>Teach</b>, then <b>Learn</b>, then <b>Test</b>.</p>
     <h2>1 · Reading a letter (the actual exam)</h2>
     <div class="grid">
-      <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><button class="btn alt" id="tips">Teach</button></div>
+      <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><div class="row"><button class="btn alt" id="tips">Teach</button>${studyButtons('reading')}</div></div>
       ${READINGS.map((r, i) => `<div class="card"><h3>${tick(`read:${r.title}`)}${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p>
         <div class="row"><button class="btn alt" data-ra="${i}">Read it with me</button><button class="btn" data-r="${i}">Answer questions</button></div></div>`).join('')}
     </div>
     <h2>2 · Word lists (exact Education Perfect + Stile lists)</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => { const [m, n] = mastery(l); return `
       <div class="card"><h3>${tick(`words:${l}`)}${esc(l)}</h3><div class="bar"><i style="width:${(m / n) * 100}%"></i></div><p class="small muted">${m}/${n} mastered both ways</p>
-      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="teach">Teach</button><button class="btn alt" data-l="${esc(l)}" data-m="learn">Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">Test DE to EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">Test EN to DE</button></div></div>`; }).join('')}</div>
+      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="teach">Teach</button>${studyButtons(`words:${l}`)}<button class="btn alt" data-l="${esc(l)}" data-m="learn">Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">Test DE to EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">Test EN to DE</button></div></div>`; }).join('')}</div>
     <h2>3 · Skills (dates, numbers, years, time, seasons)</h2>
     <div class="grid">${Object.keys(DRILLS).map((d) => { const t = S.topic[d]; return `<div class="card"><h3>${tick(d)}${esc(d)}</h3><p class="small muted">${t ? `${t.right}/${t.seen} right` : 'Not started'}</p>
-      <div class="row"><button class="btn alt" data-teach="${esc(d)}">Teach</button><button class="btn" data-d="${esc(d)}">Practise</button></div></div>`; }).join('')}</div>`;
+      <div class="row"><button class="btn alt" data-teach="${esc(d)}">Teach</button>${studyButtons(d)}<button class="btn" data-d="${esc(d)}">Practise</button></div></div>`; }).join('')}</div>`;
   $('#tips').onclick = () => readingTips();
   view.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => { const l = b.dataset.l, m = b.dataset.m; if (m === 'teach') return teachWords(l); if (m === 'learn') return learn(l); play({ title: `${l} (${m})`, next: vocabNext(l, m), limit: Math.min(25, GERMAN[l].length + 5) }); }));
   view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
+  bindStudyButtons();
   view.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => play({ title: b.dataset.d, next: drillNext(b.dataset.d), limit: 15 })));
   view.querySelectorAll('[data-ra]').forEach((b) => (b.onclick = () => readAlong(Number(b.dataset.ra))));
   view.querySelectorAll('[data-r]').forEach((b) => { const r = READINGS[b.dataset.r]; b.onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length }); });
@@ -585,12 +592,85 @@ function maths() {
     <div class="row"><button class="btn" id="mix">Mixed exam round (20)</button><button class="btn alt" id="stat">Statistics only (PSMT prep)</button></div>
     <div class="grid" style="margin-top:16px">${t4.map((n) => { const t = S.topic[n]; const p = t ? Math.round((t.right / t.seen) * 100) : 0; return `
       <div class="card"><h3>${tick(n)}${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'}</p>
-      <div class="row"><button class="btn alt" data-teach="${esc(n)}">Teach</button><button class="btn" data-t="${esc(n)}">Practise</button></div></div>`; }).join('')}</div>
+      <div class="row"><button class="btn alt" data-teach="${esc(n)}">Teach</button>${studyButtons(n)}<button class="btn" data-t="${esc(n)}">Practise</button></div></div>`; }).join('')}</div>
     <p class="small muted">Answers: round to 2 decimal places when asked. Ratios as 3:2. Money without the $ is fine.</p>`;
   $('#mix').onclick = () => play({ title: 'Term 4 mix', next: mixedMaths(t4), limit: 20 });
   $('#stat').onclick = () => play({ title: 'Statistics', next: mixedMaths(t4.filter((n) => n.startsWith('8'))), limit: 20 });
   view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
+  bindStudyButtons();
   view.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => play({ title: b.dataset.t, next: () => mathsQ(b.dataset.t), limit: 12 })));
+}
+
+// ---------- tips & tricks, flashcards ----------
+// Tips & tricks only teach: memory tricks plus a "Do this now" task (write it, say it, draw it). No questions.
+// Flashcards flip; you mark each one "Got it" or "Again" (Again cards come back). Keys: 'reading',
+// 'words:<list>' or a LESSONS key.
+const doBox = (d) => (d ? `<div class="do-it"><b>Do this now</b><p>${esc(d)}</p></div>` : '');
+const asCards = (tips) => tips.map((x) => ({ t: x.t, s: x.s, html: doBox(x.do) }));
+function studyPack(key) {
+  if (key === 'reading') return { title: 'Reading German letters', tips: READING_TRICKS.tips, cards: READING_TRICKS.cards };
+  if (key.startsWith('words:')) {
+    const list = key.slice(6), words = GERMAN[list], groups = [];
+    for (let k = 0; k < words.length; k += 5) groups.push(words.slice(k, k + 5));
+    const tips = [...WORD_TIPS, ...groups.map((g, i) => ({
+      t: `Words ${i * 5 + 1} to ${i * 5 + g.length}`,
+      s: g.map(([de, en]) => `${de} = ${en}${WORD_HOOKS[de] ? `. Memory hook: ${WORD_HOOKS[de]}` : ''}`),
+      do: 'Write these words in your book, German on the left and English on the right. Say each German word out loud. Then cover the English side and say what each one means.',
+    }))];
+    return { title: list, tips, cards: words.map(([de, en]) => [de, WORD_HOOKS[de] ? `${en}\n\n${WORD_HOOKS[de]}` : en]) };
+  }
+  return { title: key, tips: TRICKS[key]?.tips, cards: TRICKS[key]?.cards };
+}
+function studyButtons(key) {
+  return `<button class="btn alt" data-tricks="${esc(key)}">Tips & tricks</button><button class="btn alt" data-cards="${esc(key)}">Flashcards</button>`;
+}
+function bindStudyButtons() {
+  view.querySelectorAll('[data-tricks]').forEach((b) => (b.onclick = () => tricks(b.dataset.tricks)));
+  view.querySelectorAll('[data-cards]').forEach((b) => (b.onclick = () => flashcards(b.dataset.cards)));
+}
+function tricks(key) {
+  const p = studyPack(key);
+  runCards(`${p.title}: tips & tricks`, asCards(p.tips), () => {
+    if (!S.lessons[`tricks:${key}`]) { S.lessons[`tricks:${key}`] = 1; reward(15, 3, 'Tips & tricks done. +3 coins'); }
+    view.innerHTML = `<div class="play center"><h1>Tips & tricks done</h1><p class="muted">Lock it in: run through the flashcards for <b>${esc(p.title)}</b>.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="fc">Flashcards</button><button class="btn alt" id="again">Go through it again</button><button class="btn alt" id="back">Back</button></div></div>`;
+    $('#fc').onclick = () => flashcards(key);
+    $('#again').onclick = () => tricks(key);
+    $('#back').onclick = () => route();
+  });
+}
+function flashcards(key) {
+  const p = studyPack(key), queue = shuffle(p.cards.map((c) => [...c]));
+  const total = queue.length; let known = 0, flipped = false;
+  studying = key.startsWith('words:') || key === 'reading' || DRILLS[key] ? 'german' : 'maths';
+  const draw = () => {
+    if (!queue.length) {
+      document.onkeydown = null; S.xp += 10; save(); hud();
+      view.innerHTML = `<div class="play center"><h1>All ${total} cards known</h1><p class="muted">${esc(p.title)}. Come back tomorrow and run them again: that's when it really sticks.</p>
+        <div class="row" style="justify-content:center"><button class="btn" id="again">Shuffle and go again</button><button class="btn alt" id="back">Back</button></div></div>`;
+      $('#again').onclick = () => flashcards(key); $('#back').onclick = () => route();
+      return;
+    }
+    const [front, back] = queue[0];
+    view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(p.title)}: flashcards</span>
+      <p class="muted small" style="margin-top:10px">${known} of ${total} known. Say the answer in your head, then flip.</p><div class="bar"><i style="width:${(known / total) * 100}%"></i></div>
+      <div class="flash"><div class="face${flipped ? ' back' : ''}" id="card">${esc(flipped ? back : front).replace(/\n/g, '<br>')}</div></div>
+      <div class="row" style="margin-top:12px;justify-content:center">${flipped
+        ? '<button class="btn alt" id="again">Again (1)</button><button class="btn" id="got">Got it (2)</button>'
+        : '<button class="btn" id="flip">Flip (Space)</button>'}</div></div>`;
+    $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
+    $('#card').onclick = flip;
+    if (flipped) { $('#again').onclick = again; $('#got').onclick = got; } else $('#flip').onclick = flip;
+  };
+  const flip = () => { flipped = !flipped; draw(); };
+  const got = () => { queue.shift(); known++; flipped = false; draw(); };
+  const again = () => { queue.push(queue.shift()); flipped = false; draw(); };
+  document.onkeydown = (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!flipped) flip(); else got(); }
+    else if (flipped && e.key === '1') again();
+    else if (flipped && e.key === '2') got();
+  };
+  draw();
 }
 
 // ---------- teaching ----------

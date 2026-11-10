@@ -103,6 +103,10 @@ input[type=text]:focus, textarea:focus { outline: none; border-color: var(--acce
 .passage { white-space: pre-wrap; background: #f7f5ef; color: #26241f; padding: 20px 22px; border-radius: var(--radius); font-family: Georgia, "Iowan Old Style", serif; font-size: 17px; line-height: 1.6; }
 .flash { perspective: 800px; }
 .flash .face { min-height: 160px; display: grid; place-items: center; font-size: 28px; font-weight: 700; text-align: center; background: var(--panel); border: 1px solid var(--line2); border-radius: var(--radius); padding: 20px; cursor: pointer; }
+.flash .face { min-height: 200px; line-height: 1.35; transition: transform .25s ease, background .2s; }
+.flash .face.back { background: var(--accent-soft); border-color: var(--accent); font-size: 22px; font-weight: 600; }
+.do-it { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--good-soft); border: 1px solid var(--good); }
+.do-it p { margin: 4px 0 0; }
 
 /* bosses */
 .bossbar { display: flex; gap: 16px; align-items: center; margin: 18px 0 4px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
