@@ -974,6 +974,665 @@ export const READINGS = [
     "Apfelsaft"
    ]
   ]
+ },
+ {
+  "title": "Practice: Toms Halloweenparty",
+  "text": "Lieber Jonas,\nam Samstag, den einunddreißigsten Oktober ist Halloween und ich mache eine große Halloweenparty. Ich möchte dich herzlich einladen! Die Party findet bei mir zu Hause statt. Ich wohne in der Goethestraße, Nummer acht. Sie beginnt um Viertel nach sieben und endet um elf Uhr. Bitte komm verkleidet, zum Beispiel als Hexe, Vampir oder Gespenst. Es gibt Kürbissuppe, Pizza und Süßigkeiten. Zum Trinken gibt es Cola und Orangensaft. Wir wollen Musik hören und tanzen. Bitte sag mir bis Mittwoch Bescheid, ob du kommen kannst.\nBis bald,\ndein Tom",
+  "qs": [
+   [
+    "Who wrote this letter?",
+    [
+     "tom"
+    ],
+    "Signed at the bottom: \"dein Tom\"."
+   ],
+   [
+    "Who is Tom inviting to his party?",
+    [
+     "jonas"
+    ],
+    "Lieber Jonas = Dear Jonas, so the letter is to Jonas."
+   ],
+   [
+    "What date is Tom's party? (write it like 3 May)",
+    [
+     "31 october",
+     "october 31",
+     "31st october",
+     "31st of october",
+     "saturday 31 october",
+     "halloween",
+     "31/10",
+     "31.10"
+    ],
+    "am Samstag, den einunddreißigsten Oktober = Saturday 31 October (Halloween)"
+   ],
+   [
+    "What is Tom's address?",
+    [
+     "goethestraße 8",
+     "goethestrasse 8",
+     "8 goethestraße",
+     "8 goethestrasse",
+     "goethe street 8",
+     "8 goethe street",
+     "goethestraße number 8"
+    ],
+    "Ich wohne in der Goethestraße, Nummer acht = I live at Goethestraße 8."
+   ],
+   [
+    "What time does Tom's party start?",
+    [
+     "7:15",
+     "19:15",
+     "7.15",
+     "7:15pm",
+     "quarter past seven",
+     "quarter past 7"
+    ],
+    "um Viertel nach sieben = at quarter past seven (7:15 pm). nach = past."
+   ],
+   [
+    "What time does Tom's party finish?",
+    [
+     "11",
+     "11:00",
+     "11pm",
+     "11 pm",
+     "23:00",
+     "11 oclock",
+     "eleven oclock",
+     "23 uhr"
+    ],
+    "endet um elf Uhr = ends at 11 o'clock (11 pm)"
+   ],
+   [
+    "Tom writes: \"Bitte komm verkleidet\" (komm = come). How should Jonas come to the party?",
+    [
+     "in costume",
+     "in a costume",
+     "costume",
+     "dressed up",
+     "dress up",
+     "verkleidet",
+     "witch",
+     "vampire",
+     "ghost",
+     "dressed up as a witch vampire or ghost"
+    ],
+    "verkleidet = dressed up in a costume, for example als Hexe, Vampir oder Gespenst (as a witch, vampire or ghost)."
+   ],
+   [
+    "Name one food that will be at Tom's party.",
+    [
+     "pumpkin soup",
+     "soup",
+     "pizza",
+     "sweets",
+     "lollies",
+     "candy",
+     "kürbissuppe",
+     "süßigkeiten"
+    ],
+    "Kürbissuppe (pumpkin soup), Pizza und Süßigkeiten (sweets)"
+   ],
+   [
+    "Tom writes: \"Bitte sag mir bis Mittwoch Bescheid, ob du kommen kannst.\" (bis = by / until, ob du kommen kannst = if you can come). By what day must Jonas let Tom know?",
+    [
+     "wednesday",
+     "by wednesday",
+     "mittwoch",
+     "bis mittwoch"
+    ],
+    "bis Mittwoch = by Wednesday. Bescheid sagen = to let someone know."
+   ]
+  ]
+ },
+ {
+  "title": "Practice: Lenas Geburtstag",
+  "text": "Hallo Mia,\nwie geht's? Ich heiße eigentlich Magdalena, aber alle nennen mich Lena. Ich bin noch dreizehn Jahre alt und gehe in die siebte Klasse. Am dritten Mai werde ich vierzehn, aber die Party ist erst am Samstag, den neunten Mai. Zuerst gehen wir ins Schwimmbad und dann essen wir Pizza bei mir zu Hause. Ich wohne in der Bergstraße, Nummer zwanzig. Die Party beginnt um halb drei und endet um sieben Uhr. Bitte bring deinen Badeanzug mit! Sag mir bis Donnerstag Bescheid, ob du kommen kannst.\nLiebe Grüße,\ndeine Lena",
+  "qs": [
+   [
+    "What is the writer's real (full) first name?",
+    [
+     "magdalena"
+    ],
+    "Ich heiße eigentlich Magdalena = my real name is Magdalena. eigentlich = actually / really."
+   ],
+   [
+    "What does everyone call her? (her nickname)",
+    [
+     "lena"
+    ],
+    "alle nennen mich Lena = everyone calls me Lena. She also signs \"deine Lena\"."
+   ],
+   [
+    "How old is Lena turning?",
+    [
+     "14",
+     "fourteen"
+    ],
+    "werde ich vierzehn = I am turning 14. (She is noch dreizehn = still 13 right now.)"
+   ],
+   [
+    "What year level (Klasse) is Lena in?",
+    [
+     "7",
+     "year 7",
+     "seventh",
+     "7th"
+    ],
+    "die siebte Klasse = Year 7"
+   ],
+   [
+    "What is the date of Lena's actual birthday? (write it like 3 May)",
+    [
+     "3 may",
+     "may 3",
+     "3rd may",
+     "3rd of may",
+     "3/5",
+     "3.05"
+    ],
+    "Am dritten Mai werde ich vierzehn = on 3 May I turn 14. That is her real birthday."
+   ],
+   [
+    "On what date is Lena's party? (write it like 3 May)",
+    [
+     "9 may",
+     "may 9",
+     "9th may",
+     "9th of may",
+     "saturday 9 may",
+     "9/5",
+     "9.05"
+    ],
+    "die Party ist erst am Samstag, den neunten Mai = the party is not until Saturday 9 May."
+   ],
+   [
+    "Where will they go first at Lena's party?",
+    [
+     "swimming pool",
+     "pool",
+     "the pool",
+     "swimming",
+     "go swimming",
+     "schwimmbad"
+    ],
+    "Zuerst gehen wir ins Schwimmbad = first we go to the swimming pool."
+   ],
+   [
+    "What time does Lena's party start?",
+    [
+     "2:30",
+     "14:30",
+     "2.30",
+     "2:30pm",
+     "half past two",
+     "half past 2"
+    ],
+    "um halb drei = 2:30 (halb = half TO the next hour, so halb drei is half way to three)"
+   ],
+   [
+    "Lena writes: \"Bitte bring deinen Badeanzug mit!\" (bring … mit = bring along). What should Mia bring?",
+    [
+     "swimsuit",
+     "her swimsuit",
+     "swimming costume",
+     "bathers",
+     "togs",
+     "bathing suit",
+     "swimmers",
+     "badeanzug"
+    ],
+    "der Badeanzug = swimsuit (baden = to bathe / swim, Anzug = suit)"
+   ]
+  ]
+ },
+ {
+  "title": "Practice: Heiligabend bei Oma",
+  "text": "Liebe Anna, lieber Max,\nWeihnachten ist bald da! Am vierundzwanzigsten Dezember feiern wir Heiligabend bei uns in Hamburg. Opa und ich möchten euch und eure Eltern herzlich einladen. Kommt bitte um siebzehn Uhr. Zuerst singen wir Lieder am Weihnachtsbaum und dann öffnen wir die Geschenke. Zum Abendessen gibt es Kartoffelsalat mit Würstchen, wie jedes Jahr. Zum Nachtisch gibt es Lebkuchen und Plätzchen. Für die Kinder gibt es heiße Schokolade und für die Erwachsenen Kaffee. Am fünfundzwanzigsten Dezember gehen wir zusammen in die Kirche. Bitte sagt uns bis zum ersten Dezember Bescheid, ob ihr kommen könnt.\nViele liebe Grüße,\neure Oma Hilde",
+  "qs": [
+   [
+    "Who wrote this letter?",
+    [
+     "oma",
+     "oma hilde",
+     "hilde",
+     "grandma",
+     "grandma hilde",
+     "grandmother",
+     "their grandma",
+     "nan",
+     "nana",
+     "granny"
+    ],
+    "Signed \"eure Oma Hilde\" = your grandma Hilde."
+   ],
+   [
+    "Who is the letter to?",
+    [
+     "anna and max",
+     "max and anna"
+    ],
+    "Liebe Anna, lieber Max = Dear Anna, dear Max"
+   ],
+   [
+    "On what date is the celebration? (write it like 3 May)",
+    [
+     "24 december",
+     "december 24",
+     "24th december",
+     "24th of december",
+     "christmas eve",
+     "24/12",
+     "24.12"
+    ],
+    "Am vierundzwanzigsten Dezember feiern wir Heiligabend = on 24 December we celebrate Christmas Eve."
+   ],
+   [
+    "In which city will they celebrate?",
+    [
+     "hamburg",
+     "in hamburg"
+    ],
+    "bei uns in Hamburg = at our place in Hamburg"
+   ],
+   [
+    "What time should Anna and Max come? (24-hour time, like 09:00)",
+    [
+     "17:00",
+     "17 uhr",
+     "5pm",
+     "5 pm",
+     "5:00pm",
+     "17"
+    ],
+    "Kommt bitte um siebzehn Uhr = please come at 17:00 (5 pm). 17 - 12 = 5."
+   ],
+   [
+    "What will they do first?",
+    [
+     "sing",
+     "sing songs",
+     "sing carols",
+     "singing",
+     "sing christmas songs",
+     "sing songs at the christmas tree",
+     "sing by the tree"
+    ],
+    "Zuerst singen wir Lieder am Weihnachtsbaum = first we sing songs at the Christmas tree. Then they open the presents."
+   ],
+   [
+    "What is for dinner?",
+    [
+     "potato salad",
+     "potato salad with sausages",
+     "potato salad and sausages",
+     "sausages",
+     "sausage",
+     "kartoffelsalat"
+    ],
+    "Zum Abendessen gibt es Kartoffelsalat mit Würstchen = for dinner there is potato salad with sausages."
+   ],
+   [
+    "What will the children drink?",
+    [
+     "hot chocolate",
+     "chocolate",
+     "hot cocoa",
+     "cocoa",
+     "heiße schokolade"
+    ],
+    "Für die Kinder gibt es heiße Schokolade = for the children there is hot chocolate. The adults (Erwachsenen) get coffee."
+   ],
+   [
+    "Oma writes: \"Bitte sagt uns bis zum ersten Dezember Bescheid\" (sagt uns = tell us, bis zum = by the). By what date should they let her know?",
+    [
+     "1 december",
+     "december 1",
+     "1st december",
+     "1st of december",
+     "by 1 december",
+     "1/12",
+     "1.12"
+    ],
+    "bis zum ersten Dezember = by 1 December. ersten = first."
+   ]
+  ]
+ },
+ {
+  "title": "Practice: Eine Silvestereinladung",
+  "text": "Hallo Leute,\ndieses Jahr feiern wir Silvester zusammen! Die Party ist am einunddreißigsten Dezember im Jugendzentrum in der Lindenstraße, Nummer zwölf. Sie beginnt um einundzwanzig Uhr und endet um halb eins in der Nacht. Um Mitternacht gibt es ein Feuerwerk im Park. Bitte bringt etwas zu essen mit, zum Beispiel Salat, Brot oder Kuchen. Getränke gibt es schon: Limonade, Sprudelwasser und Kinderpunsch. Der Eintritt kostet fünf Euro. Bitte sagt mir bis zum siebzehnten Dezember Bescheid, ob ihr kommt.\nGuten Rutsch!",
+  "qs": [
+   [
+    "Who wrote this letter? (look at the very bottom)",
+    [
+     "nobody",
+     "no one",
+     "no name",
+     "unsigned",
+     "not signed",
+     "anonymous",
+     "unknown",
+     "we dont know",
+     "dont know",
+     "do not know",
+     "it doesnt say",
+     "does not say",
+     "did not sign"
+    ],
+    "There is no name. \"Guten Rutsch!\" means Happy New Year, it is not a name. The letter is unsigned."
+   ],
+   [
+    "What celebration is the party for?",
+    [
+     "new years eve",
+     "new year",
+     "new years",
+     "silvester"
+    ],
+    "Silvester = New Year's Eve (31 December)"
+   ],
+   [
+    "What date is the party? (write it like 3 May)",
+    [
+     "31 december",
+     "december 31",
+     "31st december",
+     "31st of december",
+     "31/12",
+     "31.12"
+    ],
+    "am einunddreißigsten Dezember = on 31 December"
+   ],
+   [
+    "Where is the party?",
+    [
+     "youth centre",
+     "youth center",
+     "youth club",
+     "jugendzentrum"
+    ],
+    "im Jugendzentrum = at the youth centre (Jugend = youth, Zentrum = centre)"
+   ],
+   [
+    "What is the street address of the party?",
+    [
+     "lindenstraße 12",
+     "lindenstrasse 12",
+     "12 lindenstraße",
+     "12 lindenstrasse",
+     "linden street 12",
+     "12 linden street"
+    ],
+    "in der Lindenstraße, Nummer zwölf = Lindenstraße 12"
+   ],
+   [
+    "What time does the party start? (24-hour time, like 09:00)",
+    [
+     "21:00",
+     "21 uhr",
+     "9pm",
+     "9 pm",
+     "9:00pm",
+     "21"
+    ],
+    "um einundzwanzig Uhr = at 21:00 (9 pm). ein + und + zwanzig = 21."
+   ],
+   [
+    "What time does the party end?",
+    [
+     "12:30",
+     "00:30",
+     "0:30",
+     "12.30",
+     "12:30am",
+     "half past twelve",
+     "half past 12"
+    ],
+    "um halb eins = 12:30 at night (halb eins is half way to one, so 0:30)"
+   ],
+   [
+    "What happens at midnight?",
+    [
+     "fireworks",
+     "firework",
+     "a fireworks show",
+     "fireworks in the park",
+     "feuerwerk"
+    ],
+    "Um Mitternacht gibt es ein Feuerwerk im Park = at midnight there are fireworks in the park."
+   ],
+   [
+    "How much does entry cost?",
+    [
+     "5 euros",
+     "5 euro",
+     "€5",
+     "5€",
+     "5",
+     "five euros"
+    ],
+    "Der Eintritt kostet fünf Euro = entry costs 5 euros."
+   ]
+  ]
+ },
+ {
+  "title": "Practice: Grillparty im Juli",
+  "text": "Lieber Lukas,\nmeine Schwester Sophie hat am zwanzigsten Juli Geburtstag. Sie wird sechzehn Jahre alt, denn sie ist zweitausendzehn geboren. Wir feiern aber erst am Sonntag, den sechsundzwanzigsten Juli, mit einer Grillparty in unserem Garten. Wir wohnen in der Parkstraße, Nummer neunzehn. Die Party fängt um vierzehn Uhr dreißig an und geht bis zwanzig Uhr. Es gibt Bratwurst, Brötchen, Nudelsalat und Eis. Zum Trinken gibt es Apfelschorle und Sprudelwasser. Wir spielen Fußball und Volleyball. Sophie möchte keine Geschenke, aber du kannst eine Karte mitbringen. Sag mir bitte bis Freitag Bescheid!\nViele Grüße,\ndein Paul",
+  "qs": [
+   [
+    "Whose birthday is it?",
+    [
+     "sophie",
+     "pauls sister",
+     "sophies"
+    ],
+    "meine Schwester Sophie hat … Geburtstag = my sister Sophie has her birthday. Paul only wrote the letter."
+   ],
+   [
+    "Who is Sophie to Paul? (how are they related)",
+    [
+     "sister",
+     "his sister",
+     "big sister",
+     "older sister"
+    ],
+    "meine Schwester = my sister"
+   ],
+   [
+    "How old is Sophie turning?",
+    [
+     "16",
+     "sixteen"
+    ],
+    "Sie wird sechzehn Jahre alt = she is turning 16. sechs + zehn = 16."
+   ],
+   [
+    "In what year was Sophie born?",
+    [
+     "2010"
+    ],
+    "sie ist zweitausendzehn geboren = she was born in 2010"
+   ],
+   [
+    "What is the date of Sophie's actual birthday? (write it like 3 May)",
+    [
+     "20 july",
+     "july 20",
+     "20th july",
+     "20th of july",
+     "20/7",
+     "20.07"
+    ],
+    "hat am zwanzigsten Juli Geburtstag = her birthday is on 20 July"
+   ],
+   [
+    "On what date is the barbecue party? (write it like 3 May)",
+    [
+     "26 july",
+     "july 26",
+     "26th july",
+     "26th of july",
+     "sunday 26 july",
+     "26/7",
+     "26.07"
+    ],
+    "Wir feiern aber erst am Sonntag, den sechsundzwanzigsten Juli = but we are not celebrating until Sunday 26 July."
+   ],
+   [
+    "What time does the party start?",
+    [
+     "14:30",
+     "2:30",
+     "2:30pm",
+     "2.30",
+     "half past two",
+     "half past 2"
+    ],
+    "um vierzehn Uhr dreißig = at 14:30 (2:30 pm)"
+   ],
+   [
+    "Name one food at the barbecue.",
+    [
+     "sausage",
+     "sausages",
+     "bratwurst",
+     "bread rolls",
+     "bread roll",
+     "rolls",
+     "pasta salad",
+     "noodle salad",
+     "ice cream",
+     "brötchen",
+     "nudelsalat",
+     "eis"
+    ],
+    "Bratwurst (sausage), Brötchen (bread rolls), Nudelsalat (pasta salad) und Eis (ice cream)"
+   ],
+   [
+    "Paul writes: \"Sophie möchte keine Geschenke\" (möchte = would like, keine = no). What does Sophie NOT want?",
+    [
+     "presents",
+     "gifts",
+     "no presents",
+     "no gifts",
+     "a present",
+     "a gift",
+     "geschenke"
+    ],
+    "keine Geschenke = no presents. Lukas can bring a card (eine Karte) instead."
+   ]
+  ]
+ },
+ {
+  "title": "Practice: Halloween im Freizeitpark",
+  "text": "Lieber Ben,\nhast du am Freitag, den dreißigsten Oktober Zeit? Meine Eltern und ich fahren zum Halloweenfest im Freizeitpark 'Gruselland' und du bist auch eingeladen! Der Park ist ganz gruselig: Überall gibt es Kürbisse, Hexen, Gespenster und Fledermäuse. Wir treffen uns um Viertel vor neun am Bahnhof und fahren mit dem Zug. Die Fahrt dauert eine Stunde. Die Tickets kosten zwanzig Euro, aber mein Vater bezahlt für dich. Bitte trag ein Kostüm! Ich gehe als Fledermaus. Wir kommen um halb acht am Abend zurück. Ruf mich bitte an oder sag meiner Mutter Bescheid.\nBis dann,\ndeine Clara",
+  "qs": [
+   [
+    "Who wrote this letter?",
+    [
+     "clara"
+    ],
+    "Signed at the bottom: \"deine Clara\". Ben is who it is to (Lieber Ben)."
+   ],
+   [
+    "What date is the trip? (write it like 3 May)",
+    [
+     "30 october",
+     "october 30",
+     "30th october",
+     "30th of october",
+     "friday 30 october",
+     "30/10",
+     "30.10"
+    ],
+    "am Freitag, den dreißigsten Oktober = on Friday 30 October. dreißig = 30."
+   ],
+   [
+    "Where are they going?",
+    [
+     "theme park",
+     "a theme park",
+     "amusement park",
+     "fun park",
+     "freizeitpark",
+     "gruselland",
+     "halloween festival"
+    ],
+    "zum Halloweenfest im Freizeitpark 'Gruselland' = to the Halloween festival at the theme park Gruselland"
+   ],
+   [
+    "What time do they meet?",
+    [
+     "8:45",
+     "08:45",
+     "8.45",
+     "8:45am",
+     "quarter to nine",
+     "quarter to 9"
+    ],
+    "um Viertel vor neun = at quarter to nine (8:45). vor = to / before."
+   ],
+   [
+    "Where do they meet?",
+    [
+     "train station",
+     "the station",
+     "station",
+     "railway station",
+     "bahnhof"
+    ],
+    "am Bahnhof = at the train station. They then go by train (mit dem Zug)."
+   ],
+   [
+    "How much do the tickets cost?",
+    [
+     "20 euros",
+     "20 euro",
+     "€20",
+     "20€",
+     "20",
+     "twenty euros"
+    ],
+    "Die Tickets kosten zwanzig Euro = the tickets cost 20 euros."
+   ],
+   [
+    "Who is paying for Ben's ticket?",
+    [
+     "claras dad",
+     "claras father",
+     "her dad",
+     "her father",
+     "dad",
+     "father",
+     "vater"
+    ],
+    "mein Vater bezahlt für dich = my dad is paying for you. \"mein\" is Clara, so it is Clara's dad."
+   ],
+   [
+    "What is Clara dressing up as?",
+    [
+     "bat",
+     "a bat",
+     "fledermaus"
+    ],
+    "Ich gehe als Fledermaus = I am going as a bat."
+   ],
+   [
+    "What time will they get back?",
+    [
+     "7:30",
+     "19:30",
+     "7.30",
+     "7:30pm",
+     "half past seven",
+     "half past 7"
+    ],
+    "um halb acht am Abend = at 7:30 in the evening (halb acht is half way to eight)"
+   ]
+  ]
  }
 ];
 
