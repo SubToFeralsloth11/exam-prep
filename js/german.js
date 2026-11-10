@@ -174,13 +174,20 @@ function keyWords(s) {
   return out;
 }
 
+// A key word counts with a spelling slip ("wether" for "whether"): 1 letter off for 4–7 letters,
+// 2 for longer. Numbers must match exactly. Any slip makes the answer 'close' instead of 'right'.
+const nearWord = (g, w) => !/\d/.test(w) && w.length >= 4 && lev(g, w) <= (w.length <= 7 ? 1 : 2);
 export function checkMeaning(input, accepted) {
   const got = keyWords(input);
   if (got.length) {
+    let close = false;
     for (const a of accepted) {
       const need = keyWords(a);
-      if (need.length && need.every((w) => got.includes(w)) && got.length <= need.length + 3) return 'right';
+      if (!need.length || got.length > need.length + 3) continue;
+      if (need.every((w) => got.includes(w))) return 'right';
+      if (need.every((w) => got.some((g) => nearWord(g, w)) || got.includes(w))) close = true;
     }
+    if (close) return 'close';
   }
   return checkGerman(input, accepted);
 }
