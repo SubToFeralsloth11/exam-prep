@@ -18,11 +18,11 @@ Live: https://subtoferalsloth11.github.io/exam-prep/
 ## Help while answering
 
 - **I don't know** (or a wrong answer) walks you through the solution one step at a time, then offers a similar question or the full lesson. Vocab asks you to type the word once to lock it in; reading questions point to the sentence in the letter, with its mini dictionary and meaning.
-- **❓ What does this mean?** explains the maths words in the question (median, markup, 2 d.p.…) or shows the letter's mini dictionary.
-- **💡 Hint** shows the next step only. A hinted right answer earns 1 coin.
+- **What does this mean?** explains the maths words in the question (median, markup, 2 d.p.…) or shows the letter's mini dictionary.
+- **Hint** shows the next step only. A hinted right answer earns 1 coin.
 - **Type `?`** in any question to open the mini dictionary and the next hint without leaving the question.
-- **🧮 Calculator** and **📝 Working out** (type or draw) on every maths question. Working out is kept (even after a reload) until you press Clear.
-- **Smart marking.** Answers about meaning are marked on their key words: "8th class", "she's in year 8" and "eight" all match 8, and "the 12th of June" matches 12 June. The right words in a different order count. A small spelling slip counts for English answers; for German answers and maths numbers that are nearly right it says "So close!" and lets you try once more.
+- **Calculator** and **Working out** (type or draw) on every maths question. Working out is kept (even after a reload) until you press Clear.
+- **Smart marking.** Answers about meaning are marked on their key words: "8th class", "she's in year 8" and "eight" all match 8, and "the 12th of June" matches 12 June. The right words in a different order count. A small spelling slip counts for English answers; for German answers and maths numbers that are nearly right it says "So close" and lets you try once more.
 
 ## Time studied
 

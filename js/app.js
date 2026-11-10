@@ -46,16 +46,16 @@ function hud() {
   const l = level(), lo = xpFor(l), hi = xpFor(l + 1);
   $('#hud-level').textContent = `Lv ${l}`;
   $('#hud-xp i').style.width = `${((S.xp - lo) / (hi - lo)) * 100}%`;
-  $('#hud-coins').textContent = `🪙 ${S.coins}`;
-  $('#hud-streak').textContent = `🔥 ${S.streak.n}`;
-  $('#hud-time').textContent = `⏱ ${mins(studied(today()).total)}`;
+  $('#hud-coins').textContent = `${S.coins} coins`;
+  $('#hud-streak').textContent = `${S.streak.n} day streak`;
+  $('#hud-time').textContent = `${mins(studied(today()).total)} today`;
   document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === location.hash.split('/')[0]));
 }
 
 function reward(xp, coins, why) {
   const before = level();
   S.xp += xp; S.coins += coins; save(); hud();
-  if (level() > before) { toast(`⬆️ Level ${level()}! +50 bonus coins`); S.coins += 50; save(); hud(); }
+  if (level() > before) { toast(`Level ${level()} reached. +50 bonus coins`); S.coins += 50; save(); hud(); }
   else if (why) toast(why);
 }
 
@@ -66,7 +66,7 @@ function bumpStreak() {
   const y = new Date(Date.now() - 864e5).toLocaleDateString('en-CA', { timeZone: 'Australia/Brisbane' });
   S.streak.n = S.streak.last === y ? S.streak.n + 1 : S.streak.last === today() ? S.streak.n : 1;
   S.streak.last = today();
-  reward(20, 20, `🔥 Streak day ${S.streak.n}! Arcade unlocked for today.`);
+  reward(20, 20, `Streak day ${S.streak.n}. Arcade unlocked for today.`);
 }
 
 // ---------- quests & badges ----------
@@ -79,27 +79,27 @@ const QUESTS = [
 ];
 function checkQuests() {
   const d = day();
-  for (const q of QUESTS) if (!d.quests[q.id] && q.get(d) >= q.goal) { d.quests[q.id] = 1; reward(30, q.coins, `✅ Quest done: ${q.text} (+${q.coins} 🪙)`); }
-  if (QUESTS.every((q) => d.quests[q.id]) && !d.quests.all) { d.quests.all = 1; reward(100, 100, '🏆 All daily quests done! +100 🪙'); }
+  for (const q of QUESTS) if (!d.quests[q.id] && q.get(d) >= q.goal) { d.quests[q.id] = 1; reward(30, q.coins, `Quest done: ${q.text} (+${q.coins} coins)`); }
+  if (QUESTS.every((q) => d.quests[q.id]) && !d.quests.all) { d.quests.all = 1; reward(100, 100, 'All daily quests done. +100 coins'); }
 }
 
 const BADGES = [
-  ['first', '🎯', 'First correct answer', () => S.total >= 1],
-  ['c100', '💯', '100 correct answers', () => S.total >= 100],
-  ['c500', '🧠', '500 correct answers', () => S.total >= 500],
-  ['combo10', '⚡', '10× combo', () => S.bestCombo >= 10],
-  ['combo25', '🌩️', '25× combo', () => S.bestCombo >= 25],
-  ['lv5', '⭐', 'Reach level 5', () => level() >= 5],
-  ['lv10', '🌟', 'Reach level 10', () => level() >= 10],
-  ['streak3', '🔥', '3-day streak', () => S.streak.n >= 3],
-  ['bger', '🇩🇪', 'Beat the German boss', () => S.bosses.ger?.won],
-  ['bmat', '📐', 'Beat the Maths boss', () => S.bosses.mat?.won],
-  ['bpsmt', '📊', 'Beat the Statistics boss', () => S.bosses.psmt?.won],
-  ['psmt', '🔬', 'Finish the PSMT lab (all 3 questions)', () => [0, 1, 2].every((i) => S.psmt[i]?.done)],
-  ['vocab', '📚', 'Master 50 German words', () => Object.entries(S.mastery).filter(([k, v]) => k.startsWith('v:') && v >= 3).length >= 50],
+  ['first', '1', 'First correct answer', () => S.total >= 1],
+  ['c100', '100', '100 correct answers', () => S.total >= 100],
+  ['c500', '500', '500 correct answers', () => S.total >= 500],
+  ['combo10', '10×', '10× combo', () => S.bestCombo >= 10],
+  ['combo25', '25×', '25× combo', () => S.bestCombo >= 25],
+  ['lv5', 'L5', 'Reach level 5', () => level() >= 5],
+  ['lv10', 'L10', 'Reach level 10', () => level() >= 10],
+  ['streak3', '3d', '3-day streak', () => S.streak.n >= 3],
+  ['bger', 'DE', 'Beat the German boss', () => S.bosses.ger?.won],
+  ['bmat', 'MA', 'Beat the Maths boss', () => S.bosses.mat?.won],
+  ['bpsmt', 'ST', 'Beat the Statistics boss', () => S.bosses.psmt?.won],
+  ['psmt', 'PS', 'Finish the PSMT lab (all 3 questions)', () => [0, 1, 2].every((i) => S.psmt[i]?.done)],
+  ['vocab', '50', 'Master 50 German words', () => Object.entries(S.mastery).filter(([k, v]) => k.startsWith('v:') && v >= 3).length >= 50],
 ];
 function checkBadges() {
-  for (const [id, icon, name, ok] of BADGES) if (!S.badges.includes(id) && ok()) { S.badges.push(id); save(); toast(`${icon} Badge unlocked: ${name} (+30 🪙)`); S.coins += 30; }
+  for (const [id, , name, ok] of BADGES) if (!S.badges.includes(id) && ok()) { S.badges.push(id); save(); toast(`Badge unlocked: ${name} (+30 coins)`); S.coins += 30; }
 }
 
 // ---------- question engine ----------
@@ -139,19 +139,19 @@ function ask() {
   const hints = stepList(q).length > 1;
   view.innerHTML = `
     <div class="play">
-      <div class="row" style="justify-content:space-between">
-        <a href="#" id="quit" class="muted">✕ ${esc(s.title)}</a>
-        <span class="muted">${s.n + 1} / ${Math.max(s.limit, s.n + 1)} · <span class="combo">${s.combo >= 3 ? `🔥 ${s.combo}× combo` : ''}</span></span>
+      <div class="row playhead">
+        <span><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(s.title)}</span></span>
+        <span class="muted small">${s.combo >= 3 ? `<span class="combo">${s.combo}× combo</span> · ` : ''}${s.n + 1} / ${Math.max(s.limit, s.n + 1)}</span>
       </div>
       <div class="bar" style="margin-top:8px"><i style="width:${Math.min(1, s.n / s.limit) * 100}%"></i></div>
-      ${s.boss ? `<div class="boss" id="boss">${s.boss.icon}</div><div class="hp"><i style="width:${(s.hp / s.boss.hp) * 100}%"></i></div><p class="center">${'❤️'.repeat(s.hearts)}${'🖤'.repeat(3 - s.hearts)} <span class="muted" id="timer"></span></p>` : ''}
+      ${s.boss ? `<div class="bossbar"><div class="boss" id="boss">${s.boss.icon}</div><div class="bossinfo"><div class="row" style="justify-content:space-between"><b>${esc(s.boss.name)}</b><span class="small muted">${s.hp} / ${s.boss.hp} HP</span></div><div class="hp"><i style="width:${(s.hp / s.boss.hp) * 100}%"></i></div><div class="row small muted" style="justify-content:space-between;margin-top:6px"><span class="lives">Lives ${'<i class="on"></i>'.repeat(s.hearts)}${'<i></i>'.repeat(3 - s.hearts)}</span><span id="timer"></span></div></div></div>` : ''}
       ${q.passage ? `<details open><summary class="muted">The letter</summary><div class="passage">${esc(q.passage)}</div></details>` : ''}
       <div class="q">${esc(q.prompt)}</div>
       <div class="row tools">
-        ${terms.length || q.dict ? '<button class="tool" id="t-means">❓ What does this mean?</button>' : ''}
-        ${hints ? '<button class="tool" id="t-hint">💡 Hint</button>' : ''}
-        ${maths ? `<button class="tool ${tools.calc ? 'on' : ''}" id="t-calc">🧮 Calculator</button><button class="tool ${tools.work ? 'on' : ''}" id="t-work">📝 Working out</button>` : ''}
-        ${LESSONS[q.topic] && !s.boss ? '<button class="tool" id="t-teach">📖 Teach me this</button>' : ''}
+        ${terms.length || q.dict ? '<button class="tool" id="t-means">What does this mean?</button>' : ''}
+        ${hints ? '<button class="tool" id="t-hint">Hint</button>' : ''}
+        ${maths ? `<button class="tool ${tools.calc ? 'on' : ''}" id="t-calc">Calculator</button><button class="tool ${tools.work ? 'on' : ''}" id="t-work">Working out</button>` : ''}
+        ${LESSONS[q.topic] && !s.boss ? '<button class="tool" id="t-teach">Teach me this</button>' : ''}
       </div>
       <div id="helpbox"></div>
       <div id="toolbox"></div>
@@ -174,13 +174,13 @@ function ask() {
   const help = $('#helpbox');
   help.innerHTML = '<div id="h-means"></div><div id="h-hints"></div>';
   const showMeans = () => {
-    $('#h-means').innerHTML = `<div class="card help"><b>📖 Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
+    $('#h-means').innerHTML = `<div class="card help"><b>Mini dictionary</b>${terms.length ? `<p class="small muted">What the words in this question mean:</p>${dictTable(terms)}` : ''}${q.dict ? dictTable(q.dict) : ''}</div>`;
   };
   const showHint = () => {
     const steps = stepList(q); if (s.locked || s.hint >= steps.length - 1) return false;
     q.hinted = true;
     const box = $('#h-hints');
-    if (!box.innerHTML) box.innerHTML = '<div class="card help"><b>💡 Hints</b> <span class="small muted">(a hinted answer earns 1 🪙)</span><ol class="steps hints"></ol></div>';
+    if (!box.innerHTML) box.innerHTML = '<div class="card help"><b>Hints</b> <span class="small muted">(a hinted answer earns 1 coin)</span><ol class="steps hints"></ol></div>';
     box.querySelector('.hints').insertAdjacentHTML('beforeend', `<li>${stepHtml(steps[s.hint++])}</li>`);
     if (s.hint >= steps.length - 1) $('#t-hint').disabled = true;
     return true;
@@ -190,7 +190,7 @@ function ask() {
   // "?" shows what the words mean and the next hint; if there's nothing left, it says what to do.
   s.help = () => {
     if (terms.length || q.dict) showMeans();
-    if (!showHint() && !(terms.length || q.dict)) $('#h-hints').innerHTML = `<div class="card help">💡 No more hints for this one. Press <b>I don't know</b> and I'll show you how it's done${LESSONS[q.topic] && !s.boss ? ', or 📖 <b>Teach me this</b> for the full lesson' : ''}.</div>`;
+    if (!showHint() && !(terms.length || q.dict)) $('#h-hints').innerHTML = `<div class="card help">No more hints for this one. Press <b>I don't know</b> and I'll show you how it's done${LESSONS[q.topic] && !s.boss ? ', or <b>Teach me this</b> for the full lesson' : ''}.</div>`;
   };
   $('#t-teach') && ($('#t-teach').onclick = () => { session = null; lesson(q.topic); });
   const ansBox = $('#ans');
@@ -225,9 +225,9 @@ function calculate(text) {
 function drawTools() {
   const box = $('#toolbox'); if (!box) return;
   box.innerHTML = `${tools.calc ? `<div class="card calc"><input type="text" id="calc-in" placeholder="e.g. 0.15 × 80" value="${esc(tools.expr)}" autocomplete="off"><div class="calc-out" id="calc-out">&nbsp;</div>
-      <div class="keypad">${['7', '8', '9', '÷', '(', '4', '5', '6', '×', ')', '1', '2', '3', '−', '^', '0', '.', '%', '+', '⌫', 'C', '='].map((k) => `<button data-c="${k}" class="${k === '=' ? 'eq' : ''}">${k}</button>`).join('')}</div>
+      <div class="keypad">${['7', '8', '9', '÷', '(', '4', '5', '6', '×', ')', '1', '2', '3', '−', '^', '0', '.', '%', '+', 'Del', 'C', '='].map((k) => `<button data-c="${k}" class="${k === '=' ? 'eq' : ''}">${k}</button>`).join('')}</div>
       <button class="btn alt" id="calc-use" style="margin-top:8px">Put result in my answer</button></div>` : ''}
-    ${tools.work ? `<div class="card work"><b>📝 Working out</b> <span class="small muted">type or draw; nothing here is marked</span>
+    ${tools.work ? `<div class="card work"><b>Working out</b> <span class="small muted">type or draw; nothing here is marked</span>
       <textarea id="work-txt" rows="4" placeholder="Write your steps here…">${esc(localStorage.getItem(WORK_KEY + 'txt') || '')}</textarea>
       <canvas id="work-pad" height="220"></canvas><div class="row"><button class="btn alt" id="work-clear">Clear drawing</button><button class="btn alt" id="work-clear-txt">Clear writing</button></div></div>` : ''}`;
   if (tools.calc) {
@@ -238,7 +238,7 @@ function drawTools() {
     box.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => {
       const k = b.dataset.c;
       if (k === '=') return run();
-      inp.value = k === 'C' ? '' : k === '⌫' ? inp.value.slice(0, -1) : inp.value + k;
+      inp.value = k === 'C' ? '' : k === 'Del' ? inp.value.slice(0, -1) : inp.value + k;
       tools.expr = inp.value; if (k === 'C') out.innerHTML = '&nbsp;';
     }));
     $('#calc-use').onclick = () => { run(); const a = $('#ans'); if (a && tools.last != null && !session?.locked) { a.value = tools.last; a.focus(); } };
@@ -252,7 +252,7 @@ function drawTools() {
     c.width = c.clientWidth || 600;
     const saved = localStorage.getItem(WORK_KEY + 'pad');
     if (saved) { const img = new Image(); img.onload = () => g.drawImage(img, 0, 0); img.src = saved; }
-    g.lineWidth = 2.5; g.lineCap = 'round'; g.strokeStyle = '#eef0ff';
+    g.lineWidth = 2.5; g.lineCap = 'round'; g.strokeStyle = '#e6e9ef';
     let down = false;
     const at = (e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * (c.width / r.width), (e.clientY - r.top) * (c.height / r.height)]; };
     c.onpointerdown = (e) => { down = true; c.setPointerCapture(e.pointerId); g.beginPath(); g.moveTo(...at(e)); };
@@ -282,7 +282,7 @@ addEventListener('keydown', (e) => {
 function tickTimer() {
   const s = session; clearInterval(s.timer);
   const left = () => Math.max(0, s.boss.seconds - Math.floor((Date.now() - s.start) / 1000));
-  const draw = () => { const t = $('#timer'); if (t) t.textContent = `⏱ ${Math.floor(left() / 60)}:${String(left() % 60).padStart(2, '0')}`; if (!left()) { clearInterval(s.timer); finish(); } };
+  const draw = () => { const t = $('#timer'); if (t) t.textContent = `${Math.floor(left() / 60)}:${String(left() % 60).padStart(2, '0')}`; if (!left()) { clearInterval(s.timer); finish(); } };
   draw(); s.timer = setInterval(draw, 500);
 }
 
@@ -296,7 +296,7 @@ function answer(input, btn) {
     if (q.lenient) res = 'typo';
     else if (!q.closeTried) {
       q.closeTried = true;
-      fb.innerHTML = `<b style="color:var(--warn)">🤏 So close!</b> ${q.subject === 'maths' ? 'Your number is nearly right. Check your working and the rounding, then try again.' : 'One or two letters are off. Check the spelling and try again.'}`;
+      fb.innerHTML = `<b style="color:var(--warn)">So close.</b> ${q.subject === 'maths' ? 'Your number is nearly right. Check your working and the rounding, then try again.' : 'One or two letters are off. Check the spelling and try again.'}`;
       const inp = $('#ans'); inp?.classList.add('accent'); inp?.focus(); inp?.select();
       return;
     } else res = q.subject === 'maths' ? 'wrong' : 'typo';
@@ -311,11 +311,11 @@ function answer(input, btn) {
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; t.right++; }
     if (s.boss) { s.hp--; const b = $('#boss'); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 150); }
     fb.innerHTML = res === 'right'
-      ? `<b class="done">✔ Correct!</b> +${coins} 🪙 ${mult > 1 && !q.hinted ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${stepList(q).length && !q.teach ? `<div class="muted small">${stepList(q).map(stepHtml).join(' → ')}</div>` : ''}`
-      : res === 'order' ? `<b class="done">✔ Right!</b> +${coins} 🪙 <span class="muted">Same words, different order. The usual way: <b>${esc(q.answer)}</b></span>`
-      : res === 'typo' ? `<b class="done">✔ Right!</b> +${coins} 🪙 <span style="color:var(--warn)">Watch the spelling: <b>${esc(q.answer)}</b></span>`
+      ? `<b class="done">Correct</b> +${coins} coins ${mult > 1 && !q.hinted ? `<span class="combo">(${mult}× combo bonus)</span>` : ''}${stepList(q).length && !q.teach ? `<div class="muted small">${stepList(q).map(stepHtml).join(' → ')}</div>` : ''}`
+      : res === 'order' ? `<b class="done">Right</b> +${coins} coins <span class="muted">Same words, different order. The usual way: <b>${esc(q.answer)}</b></span>`
+      : res === 'typo' ? `<b class="done">Right</b> +${coins} coins <span style="color:var(--warn)">Watch the spelling: <b>${esc(q.answer)}</b></span>`
         : `<b style="color:var(--warn)">≈ Almost — check your umlauts/ß:</b> ${esc(q.answer)}`;
-    const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.style.marginTop = '10px'; nb.onclick = ask;
+    const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next'; nb.style.marginTop = '10px'; nb.onclick = ask;
     fb.appendChild(document.createElement('br')); fb.appendChild(nb); nb.focus();
     s.advance = ask;
     bumpStreak();
@@ -324,7 +324,7 @@ function answer(input, btn) {
     if (q.id) S.mastery[q.id] = 0;
     if (q.topic) { const t = (S.topic[q.topic] ||= { seen: 0, right: 0 }); t.seen++; }
     if (s.boss) s.hearts--;
-    walkthrough(fb, q, input.trim() ? '✘ Not quite. Let\'s work it out together, one step at a time.' : 'No worries. Here\'s how to do it, one step at a time.');
+    walkthrough(fb, q, input.trim() ? 'Not quite. Let\'s work it out together, one step at a time.' : 'No worries. Here\'s how to do it, one step at a time.');
   }
   if (btn) btn.classList.add(res === 'wrong' ? 'wrong' : 'right');
   view.querySelectorAll('.choices button').forEach((b) => { if (b.textContent === String(q.answer) && res !== 'wrong') b.classList.add('right'); b.disabled = true; });
@@ -337,14 +337,14 @@ function answer(input, btn) {
 function walkthrough(fb, q, intro) {
   const s = session, steps = [...stepList(q).map(stepHtml), `<b>Answer: ${esc(q.answer)}</b>`];
   let i = 0;
-  fb.innerHTML = `<b style="color:${intro.startsWith('✘') ? 'var(--bad)' : 'var(--accent2)'}">${esc(intro)}</b><ol class="steps" id="steps"></ol><div class="row" id="wbtns"></div>`;
+  fb.innerHTML = `<b style="color:${intro.startsWith('Not quite') ? 'var(--bad)' : 'var(--accent2)'}">${esc(intro)}</b><ol class="steps" id="steps"></ol><div class="row" id="wbtns"></div>`;
   const ol = $('#steps', fb), btns = $('#wbtns', fb);
   const end = () => {
     if (q.kind === 'mc') view.querySelectorAll('.choices button').forEach((b) => { if (b.textContent === String(q.answer)) b.classList.add('right'); });
     btns.innerHTML = `${q.retype ? `<div class="retype"><span class="small muted">Type it once to lock it in:</span> <input type="text" id="retype" autocomplete="off" spellcheck="false"> <span id="retype-ok"></span></div>` : ''}
-      ${q.similar && !s.boss ? '<button class="btn alt" id="w-sim">🔁 Try a similar one</button>' : ''}
-      ${LESSONS[q.topic] && !s.boss ? '<button class="btn alt" id="w-teach">📖 Teach me this topic</button>' : ''}
-      <button class="btn" id="w-next">Next question →</button>`;
+      ${q.similar && !s.boss ? '<button class="btn alt" id="w-sim">Try a similar one</button>' : ''}
+      ${LESSONS[q.topic] && !s.boss ? '<button class="btn alt" id="w-teach">Teach me this topic</button>' : ''}
+      <button class="btn" id="w-next">Next question</button>`;
     s.advance = ask;
     $('#w-next', fb).onclick = ask;
     $('#w-sim', fb) && ($('#w-sim', fb).onclick = () => { s.pending = q.similar(); ask(); });
@@ -353,14 +353,14 @@ function walkthrough(fb, q, intro) {
     if (rt) {
       rt.focus();
       rt.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (rt.readOnly) ask(); } };
-      rt.oninput = () => { if (checkGerman(rt.value, [q.retype]) !== 'wrong') { rt.readOnly = true; rt.classList.add('right'); $('#retype-ok', fb).textContent = '✔ Locked in. Press Enter for the next one.'; } };
+      rt.oninput = () => { if (checkGerman(rt.value, [q.retype]) !== 'wrong') { rt.readOnly = true; rt.classList.add('right'); $('#retype-ok', fb).textContent = 'Locked in. Press Enter for the next one.'; } };
     } else $('#w-next', fb).focus();
   };
   const more = () => {
     ol.insertAdjacentHTML('beforeend', `<li>${steps[i++]}</li>`);
     ol.lastElementChild.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     if (i >= steps.length) return end();
-    btns.innerHTML = `<button class="btn" id="w-step">Next step → <span class="small">(${i}/${steps.length})</span></button>`;
+    btns.innerHTML = `<button class="btn" id="w-step">Next step <span class="small">(${i}/${steps.length})</span></button>`;
     $('#w-step', fb).onclick = more; $('#w-step', fb).focus();
   };
   s.advance = () => (i < steps.length ? more() : ask());
@@ -376,17 +376,17 @@ function finish() {
     const won = s.hp <= 0;
     const b = (S.bosses[s.boss.id] ||= { tries: 0, won: false, best: 0 });
     b.tries++; b.best = Math.max(b.best, s.right); day().boss++;
-    if (won) { const first = !b.won; b.won = true; reward(150, first ? 200 : 60, first ? `🏆 Boss defeated! +200 🪙` : '🏆 Boss defeated again! +60 🪙'); }
-    extra = won ? `<h2>🏆 ${esc(s.boss.name)} defeated!</h2>` : `<h2>💀 The boss won this time</h2><p class="muted">It had ${s.hp} HP left. Practise the topics below and try again.</p>`;
-  } else if (s.n >= 10 && pct >= 90) { reward(30, 15, '🎉 90%+ round bonus: +15 🪙'); }
+    if (won) { const first = !b.won; b.won = true; reward(150, first ? 200 : 60, first ? 'Boss defeated. +200 coins' : 'Boss defeated again. +60 coins'); }
+    extra = won ? `<h2>${esc(s.boss.name)} defeated</h2>` : `<h2>The boss won this time</h2><p class="muted">It had ${s.hp} HP left. Practise the topics below and try again.</p>`;
+  } else if (s.n >= 10 && pct >= 90) { reward(30, 15, '90%+ round bonus: +15 coins'); }
   save(); checkQuests(); checkBadges();
   const wrongs = [...new Map(s.wrongs.map((q) => [q.prompt, q])).values()];
   const weakTopics = [...new Set(wrongs.map((q) => q.topic).filter((t) => LESSONS[t]))];
   view.innerHTML = `<div class="play">
     ${extra}<h1>${s.right} / ${s.n} correct (${pct}%)</h1>
-    ${wrongs.length ? `<h2>Fix these</h2><table>${wrongs.map((q) => `<tr><td>${esc(q.prompt)}</td><td><b>${esc(q.answer)}</b></td></tr>`).join('')}</table>` : '<p>No mistakes. 🔥</p>'}
-    ${weakTopics.length ? `<h2>Learn these again</h2><div class="row">${weakTopics.map((t) => `<button class="btn alt" data-lesson="${esc(t)}">📖 ${esc(t)}</button>`).join('')}</div>` : ''}
-    <div class="row" style="margin-top:20px"><button class="btn" id="again">Go again</button><a class="btn alt" href="#home">Home</a><a class="btn gold" href="#arcade">Arcade 🪙 ${S.coins}</a></div></div>`;
+    ${wrongs.length ? `<h2>Fix these</h2><table>${wrongs.map((q) => `<tr><td>${esc(q.prompt)}</td><td><b>${esc(q.answer)}</b></td></tr>`).join('')}</table>` : '<p>No mistakes.</p>'}
+    ${weakTopics.length ? `<h2>Learn these again</h2><div class="row">${weakTopics.map((t) => `<button class="btn alt" data-lesson="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : ''}
+    <div class="row" style="margin-top:20px"><button class="btn" id="again">Go again</button><a class="btn alt" href="#home">Home</a><a class="btn gold" href="#arcade">Arcade · ${S.coins} coins</a></div></div>`;
   $('#again').onclick = () => s.onEnd ? s.onEnd() : play({ title: s.title, next: s.next, limit: s.limit, boss: s.boss });
   view.querySelectorAll('[data-lesson]').forEach((b) => (b.onclick = () => lesson(b.dataset.lesson)));
   hud();
@@ -477,7 +477,7 @@ function studyCard() {
   const weekSum = week.reduce((x, [, s]) => x + s, 0), all = Object.values(S.study).reduce((x, d) => x + d.total, 0);
   const top = Math.max(60, ...week.map(([, s]) => s));
   return `<div class="card"><div class="row" style="gap:28px">
-      <div><div class="small muted">Today</div><div class="big-num">${mins(t.total)}</div><div class="small muted">🇩🇪 ${mins(t.german)} · 📐 ${mins(t.maths)}</div></div>
+      <div><div class="small muted">Today</div><div class="big-num">${mins(t.total)}</div><div class="small muted">German ${mins(t.german)} · Maths ${mins(t.maths)}</div></div>
       <div><div class="small muted">Last 7 days</div><div class="big-num">${mins(weekSum)}</div></div>
       <div><div class="small muted">All time</div><div class="big-num">${mins(all)}</div></div></div>
     <div class="studybars">${week.map(([d, s]) => `<div title="${d}: ${mins(s)}"><i style="height:${(s / top) * 100}%"></i><span>${new Date(`${d}T12:00:00+10:00`).toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'Australia/Brisbane' })}</span></div>`).join('')}</div>
@@ -488,26 +488,26 @@ function home() {
   const d = day();
   const arcadeOpen = d.correct >= 20;
   view.innerHTML = `
-    <h1>G'day Thomas 👋</h1>
-    <p class="muted">Study → earn 🪙 → spend them on your own games in the Arcade. Content synced from your DayMap, Stile, Education Perfect and Maths OneNote on 8 Nov.</p>
+    <h1>G'day Thomas</h1>
+    <p class="muted">Study to earn coins, then spend them on your own games in the Arcade. Content synced from your DayMap, Stile, Education Perfect and Maths OneNote on 8 Nov.</p>
     <div class="grid">${[...EXAMS].sort((a, b) => Date.parse(a.due) - Date.parse(b.due)).map((e) => { const days = (Date.parse(e.due) - Date.now()) / 864e5; return `
       <div class="card exam ${days < 4 ? 'urgent' : ''}"><div class="pill">${e.subject}</div><h3 style="margin-top:6px">${esc(e.name)}</h3>
       <div class="big">${countdown(e.due)}</div><div class="small muted">${new Date(e.due).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Australia/Brisbane' })}</div>
       <p class="small muted">${esc(e.note)}</p></div>`; }).join('')}</div>
 
-    <h2>⏱ Time studied</h2>
+    <h2>Time studied</h2>
     ${studyCard()}
 
     <h2>Today's quests</h2>
-    <div class="card">${QUESTS.map((q) => { const v = Math.min(q.goal, q.get(d)); return `<div class="quest"><span class="${d.quests[q.id] ? 'done' : ''}">${d.quests[q.id] ? '✅' : '⬜'} ${q.text}</span><span class="small muted">${v}/${q.goal} · +${q.coins} 🪙</span></div>`; }).join('')}
+    <div class="card">${QUESTS.map((q) => { const v = Math.min(q.goal, q.get(d)); return `<div class="quest"><span class="${d.quests[q.id] ? 'done' : ''}"><i class="check ${d.quests[q.id] ? 'on' : ''}"></i>${q.text}</span><span class="small muted">${v}/${q.goal} · +${q.coins} coins</span></div>`; }).join('')}
       <p class="small muted">Arcade ${arcadeOpen ? '<b class="done">unlocked</b>' : `unlocks after <b>${20 - d.correct}</b> more correct answers today`}.</p></div>
 
     <h2>Study next</h2>
     <div class="grid">
-      <div class="card click" data-go="teach"><h3>📖 No idea where to start?</h3><p class="muted small">Lessons that go one small step at a time, before any questions.</p><button class="btn">Teach me</button></div>
-      <div class="card click" data-go="ger"><h3>🇩🇪 German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
-      <div class="card click" data-go="mat"><h3>📐 Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
-      <div class="card click" data-go="psmt"><h3>📊 PSMT due Fri 13 Nov</h3><p class="muted small">Check your own survey calculations before you write the report.</p><button class="btn">Open PSMT lab</button></div>
+      <div class="card click" data-go="teach"><h3>No idea where to start?</h3><p class="muted small">Lessons that go one small step at a time, before any questions.</p><button class="btn">Teach me</button></div>
+      <div class="card click" data-go="ger"><h3>German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
+      <div class="card click" data-go="mat"><h3>Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
+      <div class="card click" data-go="psmt"><h3>PSMT due Fri 13 Nov</h3><p class="muted small">Check your own survey calculations before you write the report.</p><button class="btn">Open PSMT lab</button></div>
     </div>
 
     <h2>Badges (${S.badges.length}/${BADGES.length})</h2>
@@ -526,25 +526,25 @@ function mastery(list) {
 }
 
 const taught = (key) => !!S.lessons[key];
-const tick = (key) => (taught(key) ? '✅ ' : '');
+const tick = (key) => (taught(key) ? '<span class="pill ok">Done</span> ' : '');
 
 function german() {
   view.innerHTML = `
-    <h1>🇩🇪 German – Unit 8: Was feiert man in Deutschland?</h1>
-    <p class="muted">The exam is <b>reading comprehension</b>: read a German letter (like an invitation) and answer questions about it. New to something? Do it in this order: <b>📖 Teach</b> → <b>🃏 Learn</b> → <b>✏️ Test</b>.</p>
+    <h1>German – Unit 8: Was feiert man in Deutschland?</h1>
+    <p class="muted">The exam is <b>reading comprehension</b>: read a German letter (like an invitation) and answer questions about it. New to something? Do it in this order: <b>Teach</b>, then <b>Learn</b>, then <b>Test</b>.</p>
     <h2>1 · Reading a letter (the actual exam)</h2>
     <div class="grid">
-      <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><button class="btn alt" id="tips">📖 Teach</button></div>
-      ${READINGS.map((r, i) => `<div class="card"><h3>${tick(`read:${r.title}`)}📄 ${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p>
-        <div class="row"><button class="btn alt" data-ra="${i}">📖 Read it with me</button><button class="btn" data-r="${i}">✏️ Answer questions</button></div></div>`).join('')}
+      <div class="card"><h3>${tick('read:tips')}How to read a German letter</h3><p class="small muted">Start here: what to look for, so the big block of text isn't scary.</p><button class="btn alt" id="tips">Teach</button></div>
+      ${READINGS.map((r, i) => `<div class="card"><h3>${tick(`read:${r.title}`)}${esc(r.title)}</h3><p class="small muted">${r.qs.length} questions</p>
+        <div class="row"><button class="btn alt" data-ra="${i}">Read it with me</button><button class="btn" data-r="${i}">Answer questions</button></div></div>`).join('')}
     </div>
     <h2>2 · Word lists (exact Education Perfect + Stile lists)</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => { const [m, n] = mastery(l); return `
       <div class="card"><h3>${tick(`words:${l}`)}${esc(l)}</h3><div class="bar"><i style="width:${(m / n) * 100}%"></i></div><p class="small muted">${m}/${n} mastered both ways</p>
-      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="teach">📖 Teach</button><button class="btn alt" data-l="${esc(l)}" data-m="learn">🃏 Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">✏️ DE → EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">✏️ EN → DE</button></div></div>`; }).join('')}</div>
+      <div class="row"><button class="btn alt" data-l="${esc(l)}" data-m="teach">Teach</button><button class="btn alt" data-l="${esc(l)}" data-m="learn">Learn</button><button class="btn" data-l="${esc(l)}" data-m="de-en">Test DE to EN</button><button class="btn" data-l="${esc(l)}" data-m="en-de">Test EN to DE</button></div></div>`; }).join('')}</div>
     <h2>3 · Skills (dates, numbers, years, time, seasons)</h2>
     <div class="grid">${Object.keys(DRILLS).map((d) => { const t = S.topic[d]; return `<div class="card"><h3>${tick(d)}${esc(d)}</h3><p class="small muted">${t ? `${t.right}/${t.seen} right` : 'Not started'}</p>
-      <div class="row"><button class="btn alt" data-teach="${esc(d)}">📖 Teach</button><button class="btn" data-d="${esc(d)}">✏️ Practise</button></div></div>`; }).join('')}</div>`;
+      <div class="row"><button class="btn alt" data-teach="${esc(d)}">Teach</button><button class="btn" data-d="${esc(d)}">Practise</button></div></div>`; }).join('')}</div>`;
   $('#tips').onclick = () => readingTips();
   view.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => { const l = b.dataset.l, m = b.dataset.m; if (m === 'teach') return teachWords(l); if (m === 'learn') return learn(l); play({ title: `${l} (${m})`, next: vocabNext(l, m), limit: Math.min(25, GERMAN[l].length + 5) }); }));
   view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
@@ -558,10 +558,10 @@ function learn(list) {
   studying = 'german';
   const all = GERMAN[list], words = shuffle(all); let i = 0;
   const draw = () => {
-    if (i >= words.length) { reward(20, 0, `📚 Finished learning ${list}. Now test yourself for coins!`); return german(); }
+    if (i >= words.length) { reward(20, 0, `Finished learning ${list}. Now test yourself for coins.`); return german(); }
     const [de, en] = words[i];
     const opts = shuffle([en, ...shuffle([...new Set(all.map((x) => x[1]).filter((x) => x !== en))]).slice(0, 3)]);
-    view.innerHTML = `<div class="play"><a href="#german" class="muted">✕ ${esc(list)}</a><p class="muted">${i + 1} / ${words.length} — press 1, 2, 3 or 4</p>
+    view.innerHTML = `<div class="play"><a href="#german" class="quit">Exit</a><span class="crumb">${esc(list)}</span><p class="muted">${i + 1} / ${words.length} — press 1, 2, 3 or 4</p>
       <div class="flash"><div class="face" style="cursor:default">${esc(de)}</div></div>
       <div class="choices">${opts.map((o) => `<button>${esc(o)}</button>`).join('')}</div><div class="feedback" id="fb"></div></div>`;
     view.querySelectorAll('.choices button').forEach((b) => (b.onclick = () => {
@@ -569,8 +569,8 @@ function learn(list) {
       view.querySelectorAll('.choices button').forEach((x) => { x.disabled = true; if (x.textContent === en) x.classList.add('right'); });
       if (ok) { S.xp += 1; save(); hud(); } else { b.classList.add('wrong'); words.push(words[i]); }
       i++;
-      $('#fb').innerHTML = ok ? '<b class="done">✔ Yes!</b> ' : `<b style="color:var(--bad)">✘ "${esc(de)}" means "${esc(en)}".</b> It'll come back later. `;
-      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.onclick = draw; $('#fb').appendChild(nb); nb.focus();
+      $('#fb').innerHTML = ok ? '<b class="done">Yes</b> ' : `<b style="color:var(--bad)">Not quite: "${esc(de)}" means "${esc(en)}".</b> It'll come back later. `;
+      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next'; nb.onclick = draw; $('#fb').appendChild(nb); nb.focus();
     }));
   };
   draw();
@@ -579,13 +579,13 @@ function learn(list) {
 function maths() {
   const t4 = Object.keys(TOPICS);
   view.innerHTML = `
-    <h1>📐 Maths – Term 4 (Cambridge Essential 8)</h1>
+    <h1>Maths – Term 4 (Cambridge Essential 8)</h1>
     <p class="muted">These are exactly the sections on Mr Hives' Term 4 planner: percentages 3H–3K, ratios 6A–6B, rates 6D–6G and statistics 8B–8F. Exam: Week 8 (Wed 25 Nov).
-      No idea where to start? Press <b>📖 Teach</b> on a topic: it explains one small step at a time, then gives you 5 practice questions. Every question has a 🧮 calculator, a 📝 working-out pad and a ❓ button that explains the words.</p>
+      No idea where to start? Press <b>Teach</b> on a topic: it explains one small step at a time, then gives you 5 practice questions. Every question has a calculator, a working-out pad and a button that explains the words.</p>
     <div class="row"><button class="btn" id="mix">Mixed exam round (20)</button><button class="btn alt" id="stat">Statistics only (PSMT prep)</button></div>
     <div class="grid" style="margin-top:16px">${t4.map((n) => { const t = S.topic[n]; const p = t ? Math.round((t.right / t.seen) * 100) : 0; return `
       <div class="card"><h3>${tick(n)}${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'}</p>
-      <div class="row"><button class="btn alt" data-teach="${esc(n)}">📖 Teach</button><button class="btn" data-t="${esc(n)}">✏️ Practise</button></div></div>`; }).join('')}</div>
+      <div class="row"><button class="btn alt" data-teach="${esc(n)}">Teach</button><button class="btn" data-t="${esc(n)}">Practise</button></div></div>`; }).join('')}</div>
     <p class="small muted">Answers: round to 2 decimal places when asked. Ratios as 3:2. Money without the $ is fine.</p>`;
   $('#mix').onclick = () => play({ title: 'Term 4 mix', next: mixedMaths(t4), limit: 20 });
   $('#stat').onclick = () => play({ title: 'Statistics', next: mixedMaths(t4.filter((n) => n.startsWith('8'))), limit: 20 });
@@ -596,7 +596,7 @@ function maths() {
 // ---------- teaching ----------
 function markTaught(key) {
   if (taught(key)) return;
-  S.lessons[key] = 1; reward(20, 5, '📖 Lesson done! +5 🪙');
+  S.lessons[key] = 1; reward(20, 5, 'Lesson done. +5 coins');
 }
 
 // Steps through cards one line at a time. Enter / → goes forward, ← goes back.
@@ -607,12 +607,12 @@ function runCards(title, cards, onDone) {
   const back = () => { if (l > 0) l--; else if (c > 0) { c--; l = cards[c].s.length - 1; } draw(); };
   const draw = () => {
     const card = cards[c], last = l + 1 >= card.s.length;
-    view.innerHTML = `<div class="play"><a href="#" id="quit" class="muted">✕ ${esc(title)}</a>
+    view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(title)}</span>
       <p class="muted small" style="margin-top:10px">Part ${c + 1} of ${cards.length}</p><div class="bar"><i style="width:${((c + (l + 1) / card.s.length) / cards.length) * 100}%"></i></div>
       <div class="card lesson"><h2>${esc(card.t)}</h2><ol class="steps">${card.s.slice(0, l + 1).map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
         ${card.html || ''}</div>
-      <div class="row"><button class="btn alt" id="back" ${c || l ? '' : 'disabled'}>← Back</button><button class="btn" id="fwd">${!last ? 'Next step →' : c + 1 < cards.length ? 'Next part →' : 'Done ✔'}</button></div>
-      <p class="small muted">Tip: press Enter or → to go on, ← to go back.</p></div>`;
+      <div class="row"><button class="btn alt" id="back" ${c || l ? '' : 'disabled'}>Back</button><button class="btn" id="fwd">${!last ? 'Next step' : c + 1 < cards.length ? 'Next part' : 'Done'}</button></div>
+      <p class="small muted">Tip: press Enter or the right arrow key to go on, the left arrow key to go back.</p></div>`;
     $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
     $('#back').onclick = back; $('#fwd').onclick = fwd; $('#fwd').focus();
   };
@@ -627,18 +627,18 @@ function practiceFor(key) {
 }
 
 function lesson(key) {
-  runCards(`📖 ${key}`, LESSONS[key], () => {
+  runCards(key, LESSONS[key], () => {
     markTaught(key);
     const next = practiceFor(key);
-    view.innerHTML = `<div class="play center"><h1>📖 Lesson done</h1><p class="muted">Now try 5 questions on <b>${esc(key)}</b>. If you get one wrong or press "I don't know", it's explained step by step.</p>
-      <div class="row" style="justify-content:center"><button class="btn" id="go">✏️ Your turn (5 questions)</button><button class="btn alt" id="again">📖 Read it again</button></div></div>`;
+    view.innerHTML = `<div class="play center"><h1>Lesson done</h1><p class="muted">Now try 5 questions on <b>${esc(key)}</b>. If you get one wrong or press "I don't know", it's explained step by step.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="go">Your turn (5 questions)</button><button class="btn alt" id="again">Read it again</button></div></div>`;
     $('#go').onclick = () => play({ title: key, next, limit: 5 });
     $('#again').onclick = () => lesson(key);
   });
 }
 
 function readingTips() {
-  runCards('📖 How to read a German letter', READING_TIPS, () => { markTaught('read:tips'); german(); });
+  runCards('How to read a German letter', READING_TIPS, () => { markTaught('read:tips'); german(); });
 }
 
 // One piece of the letter at a time, with a mini dictionary and the meaning on request.
@@ -650,21 +650,21 @@ function readAlong(ri) {
   const back = () => { if (shown) shown = false; else if (i > 0) { i--; shown = true; } draw(); };
   const draw = () => {
     const [de, en, words] = chunks[i];
-    view.innerHTML = `<div class="play"><a href="#" id="quit" class="muted">✕ ${esc(r.title)}</a>
+    view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(r.title)}</span>
       <p class="muted small" style="margin-top:10px">Piece ${i + 1} of ${chunks.length}. Read the German, use the mini dictionary, try to work out the meaning, then check.</p>
       <div class="bar"><i style="width:${((i + (shown ? 1 : 0.5)) / chunks.length) * 100}%"></i></div>
       ${i ? `<div class="passage faded">${chunks.slice(Math.max(0, i - 2), i).map((c) => esc(c[0])).join(' ')}</div>` : ''}
       <div class="passage now">${esc(de)}</div>
-      <div class="card help"><b>📖 Mini dictionary</b>${dictTable(words)}</div>
+      <div class="card help"><b>Mini dictionary</b>${dictTable(words)}</div>
       ${shown ? `<div class="card"><b>In English:</b> ${esc(en)}</div>` : ''}
-      <div class="row" style="margin-top:12px"><button class="btn alt" id="back" ${i || shown ? '' : 'disabled'}>← Back</button><button class="btn" id="fwd">${!shown ? 'Show me what it means' : i + 1 < chunks.length ? 'Next piece →' : 'Done ✔'}</button></div></div>`;
+      <div class="row" style="margin-top:12px"><button class="btn alt" id="back" ${i || shown ? '' : 'disabled'}>Back</button><button class="btn" id="fwd">${!shown ? 'Show me what it means' : i + 1 < chunks.length ? 'Next piece' : 'Done'}</button></div></div>`;
     $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
     $('#back').onclick = back; $('#fwd').onclick = fwd; $('#fwd').focus();
   };
   const done = () => {
     document.onkeydown = null; markTaught(`read:${r.title}`);
-    view.innerHTML = `<div class="play center"><h1>📄 You read the whole letter</h1><p class="muted">Now answer the questions. The mini dictionary is still there (❓ button), and wrong answers point you to the right sentence.</p>
-      <div class="row" style="justify-content:center"><button class="btn" id="go">✏️ Answer the questions</button><button class="btn alt" id="again">📖 Read it again</button></div></div>`;
+    view.innerHTML = `<div class="play center"><h1>You read the whole letter</h1><p class="muted">Now answer the questions. The mini dictionary is still there (the What does this mean? button), and wrong answers point you to the right sentence.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="go">Answer the questions</button><button class="btn alt" id="again">Read it again</button></div></div>`;
     $('#go').onclick = () => play({ title: r.title, next: readingNext(r), limit: r.qs.length });
     $('#again').onclick = () => readAlong(ri);
   };
@@ -678,15 +678,15 @@ function teachWords(list) {
   const all = GERMAN[list], groups = [];
   for (let k = 0; k < all.length; k += 5) groups.push(all.slice(k, k + 5));
   let g = 0, w = 0, queue = null;
-  const header = () => `<a href="#" id="quit" class="muted">✕ ${esc(list)}</a><p class="muted small" style="margin-top:10px">Group ${g + 1} of ${groups.length}</p><div class="bar"><i style="width:${((g + (queue ? 0.5 : (w + 1) / groups[g].length / 2)) / groups.length) * 100}%"></i></div>`;
+  const header = () => `<a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(list)}</span><p class="muted small" style="margin-top:10px">Group ${g + 1} of ${groups.length}</p><div class="bar"><i style="width:${((g + (queue ? 0.5 : (w + 1) / groups[g].length / 2)) / groups.length) * 100}%"></i></div>`;
   const bind = () => { $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); }; };
   const meet = () => {
     const grp = groups[g], [de, en] = grp[w], art = de.match(/^(der|die|das) /)?.[1];
     view.innerHTML = `<div class="play">${header()}
       <div class="flash"><div class="face" style="cursor:default">${esc(de)}<div class="small muted" style="font-weight:400;margin-top:8px">${esc(en)}</div></div></div>
       ${art ? `<p class="small muted center">"${art}" word: learn the der/die/das with it.</p>` : ''}
-      ${w ? `<div class="card help"><b>📖 This group so far</b>${dictTable(grp.slice(0, w))}</div>` : ''}
-      <div class="row" style="margin-top:12px"><button class="btn" id="fwd">${w + 1 < grp.length ? 'Next word →' : 'Quick check on these words →'}</button></div></div>`;
+      ${w ? `<div class="card help"><b>This group so far</b>${dictTable(grp.slice(0, w))}</div>` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn" id="fwd">${w + 1 < grp.length ? 'Next word' : 'Quick check on these words'}</button></div></div>`;
     bind(); $('#fwd').onclick = fwdMeet; $('#fwd').focus();
   };
   const fwdMeet = () => { if (w + 1 < groups[g].length) { w++; meet(); } else { queue = shuffle(groups[g]); check(); } };
@@ -702,14 +702,14 @@ function teachWords(list) {
       view.querySelectorAll('.choices button').forEach((x) => { x.disabled = true; if (x.textContent === en) x.classList.add('right'); });
       if (!ok) b.classList.add('wrong');
       queue.shift(); if (!ok) queue.push([de, en]);
-      $('#fb').innerHTML = ok ? '<b class="done">✔ Yes!</b> ' : `<b style="color:var(--bad)">✘ "${esc(de)}" means "${esc(en)}".</b> It'll come back in a moment. `;
-      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next →'; nb.onclick = check; $('#fb').appendChild(nb); nb.focus();
+      $('#fb').innerHTML = ok ? '<b class="done">Yes</b> ' : `<b style="color:var(--bad)">Not quite: "${esc(de)}" means "${esc(en)}".</b> It'll come back in a moment. `;
+      const nb = document.createElement('button'); nb.className = 'btn'; nb.textContent = 'Next'; nb.onclick = check; $('#fb').appendChild(nb); nb.focus();
     }));
   };
   const done = () => {
     document.onkeydown = null; markTaught(`words:${list}`);
-    view.innerHTML = `<div class="play center"><h1>📖 You've met every word in ${esc(list)}</h1><p class="muted">Next: 🃏 Learn them with flashcards, then ✏️ test yourself for coins.</p>
-      <div class="row" style="justify-content:center"><button class="btn" id="learn">🃏 Learn (flashcards)</button><button class="btn alt" id="test">✏️ Test DE → EN</button></div></div>`;
+    view.innerHTML = `<div class="play center"><h1>You've met every word in ${esc(list)}</h1><p class="muted">Next: learn them with flashcards, then test yourself for coins.</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="learn">Learn (flashcards)</button><button class="btn alt" id="test">Test DE to EN</button></div></div>`;
     $('#learn').onclick = () => learn(list);
     $('#test').onclick = () => play({ title: `${list} (de-en)`, next: vocabNext(list, 'de-en'), limit: Math.min(25, all.length + 5) });
   };
@@ -718,16 +718,16 @@ function teachWords(list) {
 
 // Every lesson in order, for "I have no idea where to start".
 function teach() {
-  const item = (key, label, attrs) => `<div class="card click" ${attrs}><h3>${taught(key) ? '✅' : '📖'} ${esc(label)}</h3><p class="small muted">${taught(key) ? 'Done. Click to go over it again.' : 'Not done yet'}</p></div>`;
-  view.innerHTML = `<h1>📖 Teach me</h1>
-    <p class="muted">Start here if you have no idea. Every lesson goes one small step at a time, then you practise. Order: <b>📖 Teach</b> → <b>🃏 Learn</b> → <b>✏️ Test</b>.</p>
-    <h2>🇩🇪 German: reading a letter</h2>
+  const item = (key, label, attrs) => `<div class="card click" ${attrs}><h3>${taught(key) ? '<span class="pill ok">Done</span> ' : ''}${esc(label)}</h3><p class="small muted">${taught(key) ? 'Done. Click to go over it again.' : 'Not done yet'}</p></div>`;
+  view.innerHTML = `<h1>Teach me</h1>
+    <p class="muted">Start here if you have no idea. Every lesson goes one small step at a time, then you practise. Order: <b>Teach</b>, then <b>Learn</b>, then <b>Test</b>.</p>
+    <h2>German: reading a letter</h2>
     <div class="grid">${item('read:tips', 'How to read a German letter', 'data-tips')}${READINGS.map((r, i) => item(`read:${r.title}`, `Read with me: ${r.title}`, `data-ra="${i}"`)).join('')}</div>
-    <h2>🇩🇪 German: skills</h2>
+    <h2>German: skills</h2>
     <div class="grid">${Object.keys(DRILLS).map((d) => item(d, d, `data-teach="${esc(d)}"`)).join('')}</div>
-    <h2>🇩🇪 German: word lists</h2>
+    <h2>German: word lists</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => item(`words:${l}`, l, `data-words="${esc(l)}"`)).join('')}</div>
-    <h2>📐 Maths</h2>
+    <h2>Maths</h2>
     <div class="grid">${Object.keys(TOPICS).map((t) => item(t, t, `data-teach="${esc(t)}"`)).join('')}</div>`;
   $('[data-tips]').onclick = readingTips;
   view.querySelectorAll('[data-ra]').forEach((c) => (c.onclick = () => readAlong(Number(c.dataset.ra))));
@@ -750,7 +750,7 @@ function histogram(xs, q) {
   const w = Math.max(1, Math.ceil((hi - lo + 1) / bins));
   const counts = Array(bins).fill(0); xs.forEach((x) => counts[Math.min(bins - 1, Math.floor((x - lo) / w))]++);
   const max = Math.max(...counts), W = 600, H = 200, bw = (W - 40) / bins;
-  return `<svg class="hist" viewBox="0 0 ${W} ${H + 30}">${counts.map((c, i) => `<rect x="${30 + i * bw}" y="${H - (c / max) * (H - 10)}" width="${bw - 2}" height="${(c / max) * (H - 10)}" fill="#7c5cff"/><text x="${30 + i * bw + bw / 2}" y="${H + 14}" fill="#9aa0c3" font-size="10" text-anchor="middle">${w === 1 ? lo + i * w : `${lo + i * w}–${lo + (i + 1) * w - 1}`}</text>${c ? `<text x="${30 + i * bw + bw / 2}" y="${H - (c / max) * (H - 10) - 3}" fill="#eef0ff" font-size="10" text-anchor="middle">${c}</text>` : ''}`).join('')}</svg>`;
+  return `<svg class="hist" viewBox="0 0 ${W} ${H + 30}">${counts.map((c, i) => `<rect x="${30 + i * bw}" y="${H - (c / max) * (H - 10)}" width="${bw - 2}" height="${(c / max) * (H - 10)}" fill="#5b8cff"/><text x="${30 + i * bw + bw / 2}" y="${H + 14}" fill="#8b93a7" font-size="10" text-anchor="middle">${w === 1 ? lo + i * w : `${lo + i * w}–${lo + (i + 1) * w - 1}`}</text>${c ? `<text x="${30 + i * bw + bw / 2}" y="${H - (c / max) * (H - 10) - 3}" fill="#e6e9ef" font-size="10" text-anchor="middle">${c}</text>` : ''}`).join('')}</svg>`;
 }
 
 let dataView = 'sorted';
@@ -794,22 +794,22 @@ function psmt() {
   const allCells = GROUPS.length * fields.length, okCells = Object.values(st.cells).filter(Boolean).length;
   const unlocked = okCells === allCells;
   view.innerHTML = `
-    <h1>📊 PSMT lab – ${esc(PSMT.question)}</h1>
+    <h1>PSMT lab – ${esc(PSMT.question)}</h1>
     <p class="muted">Due <b>Fri 13 Nov</b> on DayMap. ${esc(PSMT.rules)}</p>
-    <div class="row">${SURVEY_QUESTIONS.map((q, i) => `<a class="btn ${i === qi ? '' : 'alt'}" href="#psmt/${i}">${S.psmt[i]?.done ? '✅ ' : ''}Q${i + 1}: ${esc(q)}</a>`).join('')}</div>
+    <div class="row">${SURVEY_QUESTIONS.map((q, i) => `<a class="btn ${i === qi ? '' : 'alt'}" href="#psmt/${i}">Q${i + 1}: ${esc(q)}${S.psmt[i]?.done ? ' (done)' : ''}</a>`).join('')}</div>
     <h2>The data</h2>
     <p class="small muted">Your class survey answers for "${esc(SURVEY_QUESTIONS[qi])}" (from "8E Data collection (Hives)(1-196).xlsx"). Each number is one student.</p>
-    <div class="row" style="margin-bottom:10px"><button class="btn ${dataView === 'raw' ? '' : 'alt'}" data-view="raw">As collected</button><button class="btn ${dataView === 'sorted' ? '' : 'alt'}" data-view="sorted">In order (smallest → biggest)</button><button class="btn ${dataView === 'freq' ? '' : 'alt'}" data-view="freq">Frequency table</button></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn ${dataView === 'raw' ? '' : 'alt'}" data-view="raw">As collected</button><button class="btn ${dataView === 'sorted' ? '' : 'alt'}" data-view="sorted">In order (smallest to biggest)</button><button class="btn ${dataView === 'freq' ? '' : 'alt'}" data-view="freq">Frequency table</button></div>
     <div class="grid">${GROUPS.map(([g], gi) => `<div class="card"><h3>${g}</h3><p class="small muted">${truth[gi].n} students</p>${dataBlock(truth[gi].xs)}</div>`).join('')}</div>
-    <h2>Step 1 · Calculate it yourself (+5 🪙 per correct cell)</h2>
-    <p class="small muted">Use the data above (or your spreadsheet). Type your answer and press Enter. For more than one mode, type them separated by commas. Stuck? The 📖 Teach lessons for 8D and 8E show how.</p>
+    <h2>Step 1 · Calculate it yourself (+5 coins per correct cell)</h2>
+    <p class="small muted">Use the data above (or your spreadsheet). Type your answer and press Enter. For more than one mode, type them separated by commas. Stuck? The Teach lessons for 8D and 8E show how.</p>
     <div class="card" style="overflow-x:auto"><table><tr><th></th>${fields.map(([, l]) => `<th>${l}</th>`).join('')}</tr>
       ${GROUPS.map(([g], gi) => `<tr><th>${g}</th>${fields.map(([f]) => { const k = `${gi}:${f}`; return `<td><input type="text" data-k="${k}" value="${esc(st.cells[k] ? (f === 'mode' ? truth[gi].mode.join(', ') : truth[gi][f]) : '')}" ${st.cells[k] ? 'readonly style="border-color:var(--good)"' : ''} size="7"></td>`; }).join('')}</tr>`).join('')}</table>
       <p class="small muted">${okCells}/${allCells} correct</p></div>
-    <h2>Step 2 · Shape of each distribution ${unlocked ? '' : '🔒 (finish step 1 to unlock the histograms)'}</h2>
+    <h2>Step 2 · Shape of each distribution ${unlocked ? '' : '<span class="pill">Locked</span> <span class="small muted">finish step 1 to unlock the histograms</span>'}</h2>
     ${unlocked ? `<div class="grid">${GROUPS.map(([g], gi) => `<div class="card"><h3>${g}</h3>${histogram(truth[gi].xs, qi)}
       <div class="row">${['positively skewed', 'roughly symmetric', 'negatively skewed'].map((sh) => `<button class="btn ${st.shapes[gi] === sh ? 'good' : 'alt'}" data-g="${gi}" data-s="${sh}" style="padding:6px 10px;font-size:13px">${sh}</button>`).join('')}</div>
-      ${st.shapes[gi] ? `<p class="small ${st.shapes[gi] === skew(truth[gi].xs) ? 'done' : ''}">${st.shapes[gi] === skew(truth[gi].xs) ? '✔ Matches the data (mean vs median agrees).' : `Hmm. Mean ${truth[gi].mean} vs median ${truth[gi].median}: where is the long tail?`}</p>` : ''}</div>`).join('')}</div>` : ''}
+      ${st.shapes[gi] ? `<p class="small ${st.shapes[gi] === skew(truth[gi].xs) ? 'done' : ''}">${st.shapes[gi] === skew(truth[gi].xs) ? 'Matches the data (mean vs median agrees).' : `Hmm. Mean ${truth[gi].mean} vs median ${truth[gi].median}: where is the long tail?`}</p>` : ''}</div>`).join('')}</div>` : ''}
     <h2>Step 3 · Report checklist (from the task sheet)</h2>
     <div class="card">${PSMT.sections.map(([h, t]) => `<div class="quest"><span><b>${esc(h)}</b><br><span class="small muted">${esc(t)}</span></span></div>`).join('')}</div>
     <h2>Marking criteria</h2><ul>${PSMT.criteria.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
@@ -821,26 +821,26 @@ function psmt() {
     if (e.key !== 'Enter' || inp.readOnly) return;
     const [gi, f] = inp.dataset.k.split(':'); const t = truth[gi];
     const ok = f === 'mode' ? (() => { const got = inp.value.split(/[ ,]+/).filter(Boolean).map(Number).sort((a, b) => a - b); return got.length === t.mode.length && got.every((v, i) => v === [...t.mode].sort((a, b) => a - b)[i]); })() : checkMaths(inp.value, t[f]);
-    if (ok) { st.cells[inp.dataset.k] = 1; day().maths++; S.total++; reward(15, 5, '✔ Correct'); if (Object.values(st.cells).filter(Boolean).length === allCells) toast('🔓 Histograms unlocked!'); save(); psmt(); }
+    if (ok) { st.cells[inp.dataset.k] = 1; day().maths++; S.total++; reward(15, 5, 'Correct'); if (Object.values(st.cells).filter(Boolean).length === allCells) toast('Histograms unlocked'); save(); psmt(); }
     else { inp.style.borderColor = 'var(--bad)'; toast('Not quite: check your working (order the data, count carefully).'); }
   }));
   view.querySelectorAll('[data-g]').forEach((b) => (b.onclick = () => {
     const gi = b.dataset.g; const first = !st.shapes[gi]; st.shapes[gi] = b.dataset.s;
     if (first && b.dataset.s === skew(truth[gi].xs)) reward(15, 10);
-    if (GROUPS.every((_, i) => st.shapes[i] === skew(truth[i].xs)) && !st.done) { st.done = true; reward(80, 60, `🔬 PSMT question ${qi + 1} complete! +60 🪙`); }
+    if (GROUPS.every((_, i) => st.shapes[i] === skew(truth[i].xs)) && !st.done) { st.done = true; reward(80, 60, `PSMT question ${qi + 1} complete. +60 coins`); }
     save(); checkBadges(); psmt();
   }));
 }
 
 // ---------- bosses ----------
 const BOSSES = [
-  { id: 'ger', name: 'Der Geburtstagsdrache', icon: '🐉', hp: 15, seconds: 600, title: 'German exam boss', make: germanMix },
-  { id: 'psmt', name: 'The Skewed Statistic', icon: '👾', hp: 12, seconds: 480, title: 'Statistics boss', make: () => mixedMaths(Object.keys(TOPICS).filter((n) => n.startsWith('8'))) },
-  { id: 'mat', name: 'The Percentage Titan', icon: '🗿', hp: 18, seconds: 900, title: 'Term 4 Maths exam boss', make: () => mixedMaths(Object.keys(TOPICS)) },
+  { id: 'ger', name: 'Der Geburtstagsdrache', icon: 'GD', hp: 15, seconds: 600, title: 'German exam boss', make: germanMix },
+  { id: 'psmt', name: 'The Skewed Statistic', icon: 'SS', hp: 12, seconds: 480, title: 'Statistics boss', make: () => mixedMaths(Object.keys(TOPICS).filter((n) => n.startsWith('8'))) },
+  { id: 'mat', name: 'The Percentage Titan', icon: 'PT', hp: 18, seconds: 900, title: 'Term 4 Maths exam boss', make: () => mixedMaths(Object.keys(TOPICS)) },
 ];
 function bosses() {
-  view.innerHTML = `<h1>⚔️ Boss fights</h1><p class="muted">Timed mock exams. Every right answer hits the boss; 3 wrong answers or running out of time and you lose. First win: +200 🪙 and a badge.</p>
-    <div class="grid">${BOSSES.map((b) => { const r = S.bosses[b.id]; return `<div class="card click" data-b="${b.id}"><div class="boss">${b.icon}</div><h3>${esc(b.name)}</h3><p class="small muted">${esc(b.title)} · ${b.hp} HP · ${b.seconds / 60} min</p><p class="small">${r ? `${r.won ? '🏆 Defeated' : '💀 Not yet beaten'} · ${r.tries} tries · best ${r.best} hits` : 'Not fought yet'}</p><button class="btn">Fight</button></div>`; }).join('')}</div>`;
+  view.innerHTML = `<h1>Boss fights</h1><p class="muted">Timed mock exams. Every right answer hits the boss; 3 wrong answers or running out of time and you lose. First win: +200 coins and a badge.</p>
+    <div class="grid">${BOSSES.map((b) => { const r = S.bosses[b.id]; return `<div class="card click bosscard" data-b="${b.id}"><div class="boss">${b.icon}</div><h3>${esc(b.name)}</h3><p class="small muted">${esc(b.title)} · ${b.hp} HP · ${b.seconds / 60} min</p><p class="small">${r ? `${r.won ? '<span class="pill ok">Defeated</span>' : 'Not yet beaten'} · ${r.tries} tries · best ${r.best} hits` : 'Not fought yet'}</p><button class="btn">Fight</button></div>`; }).join('')}</div>`;
   view.querySelectorAll('[data-b]').forEach((c) => { const b = BOSSES.find((x) => x.id === c.dataset.b); c.onclick = () => play({ title: b.name, next: b.make(), limit: b.hp + 3, boss: b }); });
 }
 
@@ -848,13 +848,13 @@ function bosses() {
 const PER_MIN = 25;
 function arcade() {
   const open = day().correct >= 20;
-  view.innerHTML = `<h1>🕹️ Arcade</h1>
-    <p class="muted">Your own games. Play time costs <b>${PER_MIN} 🪙 per minute</b> (about 3 minutes of study per minute of play). ${open ? '' : `<b>Locked today:</b> get ${20 - day().correct} more answers right first.`}</p>
-    <div class="card row" style="justify-content:space-between"><span>Banked play time: <b>${Math.floor(S.playSec / 60)}:${String(S.playSec % 60).padStart(2, '0')}</b> · You have <b>${S.coins} 🪙</b></span>
-      <span class="row">${[5, 10, 15].map((m) => `<button class="btn gold" data-buy="${m}" ${S.coins < m * PER_MIN ? 'disabled' : ''}>Buy ${m} min (${m * PER_MIN} 🪙)</button>`).join('')}</span></div>
-    <div class="grid" style="margin-top:16px">${GAMES.map((g) => `<div class="card ${open && S.playSec > 0 ? 'click' : 'locked'}" data-g="${g.id}"><h3>🎮 ${esc(g.name)}</h3><p class="small muted">${open ? (S.playSec > 0 ? 'Click to play' : 'Buy play time first') : '🔒 Study first'}</p></div>`).join('')}</div>`;
+  view.innerHTML = `<h1>Arcade</h1>
+    <p class="muted">Your own games. Play time costs <b>${PER_MIN} coins per minute</b> (about 3 minutes of study per minute of play). ${open ? '' : `<b>Locked today:</b> get ${20 - day().correct} more answers right first.`}</p>
+    <div class="card row" style="justify-content:space-between"><span>Banked play time: <b>${Math.floor(S.playSec / 60)}:${String(S.playSec % 60).padStart(2, '0')}</b> · You have <b>${S.coins} coins</b></span>
+      <span class="row">${[5, 10, 15].map((m) => `<button class="btn gold" data-buy="${m}" ${S.coins < m * PER_MIN ? 'disabled' : ''}>Buy ${m} min (${m * PER_MIN} coins)</button>`).join('')}</span></div>
+    <div class="grid" style="margin-top:16px">${GAMES.map((g) => `<div class="card ${open && S.playSec > 0 ? 'click' : 'locked'}" data-g="${g.id}"><h3>${esc(g.name)}</h3><p class="small muted">${open ? (S.playSec > 0 ? 'Click to play' : 'Buy play time first') : 'Locked: study first'}</p></div>`).join('')}</div>`;
   view.querySelectorAll('[data-buy]').forEach((b) => (b.onclick = () => { const m = Number(b.dataset.buy); if (S.coins < m * PER_MIN) return; S.coins -= m * PER_MIN; S.playSec += m * 60; save(); hud(); arcade(); }));
-  view.querySelectorAll('[data-g]').forEach((c) => (c.onclick = () => { if (!open || S.playSec <= 0) return toast(open ? 'Buy play time first 🪙' : 'Get 20 answers right today to unlock 🔒'); choose(GAMES.find((g) => g.id === c.dataset.g)); }));
+  view.querySelectorAll('[data-g]').forEach((c) => (c.onclick = () => { if (!open || S.playSec <= 0) return toast(open ? 'Buy play time first' : 'Get 20 answers right today to unlock'); choose(GAMES.find((g) => g.id === c.dataset.g)); }));
   if (S.godot && S.godot.ends > Date.now()) godotSession();
 }
 
@@ -912,7 +912,7 @@ function godotSession() {
 
 function launch(game) {
   const wrap = document.createElement('div'); wrap.className = 'arcade-frame';
-  wrap.innerHTML = `<header><span>🎮 ${esc(game.name)}</span><span id="left"></span><button class="btn alt" id="stop">Stop & save time</button></header><div class="game-loading" id="loading"><div class="spinner"></div><p><b>Loading ${esc(game.name)}…</b></p><p class="small muted" id="load-msg">Your play timer is paused until the game is ready.</p></div><iframe src="${game.url}" allow="autoplay; fullscreen; gamepad; cross-origin-isolated" allowfullscreen></iframe>`;
+  wrap.innerHTML = `<header><span>${esc(game.name)}</span><span id="left"></span><button class="btn alt" id="stop">Stop & save time</button></header><div class="game-loading" id="loading"><div class="spinner"></div><p><b>Loading ${esc(game.name)}…</b></p><p class="small muted" id="load-msg">Your play timer is paused until the game is ready.</p></div><iframe src="${game.url}" allow="autoplay; fullscreen; gamepad; cross-origin-isolated" allowfullscreen></iframe>`;
   document.body.appendChild(wrap);
   const frame = $('iframe', wrap), loading = $('#loading', wrap);
   let pageLoaded = false, ready = false, waited = 0;
@@ -959,19 +959,19 @@ function launch(game) {
       waited++;
       if (gameStarted()) { ready = true; loading.remove(); lastFrame = lastChange = Date.now(); }
       else {
-        $('#left', wrap).textContent = `⏸ ${fmt()} left (paused while loading)`;
+        $('#left', wrap).textContent = `Paused · ${fmt()} left (waiting for the game to load)`;
         if (waited >= 6) $('#load-msg', wrap).textContent = `Still working, this one is taking a while (${waited}s). Big games can take up to a minute. Your timer stays paused.`;
         return;
       }
     }
     if (document.visibilityState !== 'visible' || frozen()) {
-      $('#left', wrap).textContent = `⏸ ${fmt()} left (paused: game frozen or on a pause screen)`;
+      $('#left', wrap).textContent = `Paused · ${fmt()} left (game frozen or on a pause screen)`;
       return;
     }
     S.playSec = Math.max(0, S.playSec - 1);
-    $('#left', wrap).textContent = `⏱ ${fmt()} left`;
+    $('#left', wrap).textContent = `${fmt()} left`;
     if (S.playSec % 10 === 0) save();
-    if (!S.playSec) { close(); toast('⏰ Play time is up. Back to study to earn more!'); }
+    if (!S.playSec) { close(); toast('Play time is up. Back to study to earn more.'); }
   }, 1000);
   $('#stop', wrap).onclick = close;
 }
