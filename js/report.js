@@ -148,78 +148,134 @@ function pace() {
 }
 let tick;
 
+// ---------- extra help, from the marking guide in the document ----------
+// doc: the bullet in the document this part answers. mark: what the marker checks (the Accuracy /
+// Coherence / Depth lines in that section's box). simple: the same thing in plain words.
+// example: a model on a DIFFERENT topic (shoe sizes of two sports teams), so it shows the style
+// without giving you your answer.
+const HELP = {
+  survey: { doc: 'Survey question investigated', mark: ['One question only: the document has one bullet here.'], simple: 'Which one of the three class survey questions is your whole report about?', example: 'What is your shoe size? (Please answer in whole numbers only)' },
+  aim: { doc: 'Describe the aim of the investigation.', mark: ['Coherence: purpose and approach described in a logical, easy-to-follow way.'], simple: 'What are you trying to find out? Say it in your own words, and say which groups you compare.', example: 'The aim of this investigation is to find out whether the shoe sizes of the Under 14 netball team are typical of all Under 14 players in the club, by comparing our team with another team and with the whole club.' },
+  obs: { doc: 'Describe observations to give investigation context', mark: ['Depth: observations show thoughtful consideration.'], simple: 'Facts you already know before you start that help explain the situation. Numbers are best.', example: 'There are 12 players in our team and 96 in the club. Shoe size usually goes up with age, and all players are 13 or 14.' },
+  assume: { doc: 'Describe assumptions and what needs to be considered before beginning', mark: ['Depth: assumptions show thoughtful consideration.'], simple: 'Things you have to trust are true (but might not be), and how each one could change your results.', example: 'We assume players know their real shoe size and did not guess. If some guessed, the mean could be off by a size or more.' },
+  steps: { doc: 'Describe the steps needed to investigate the process', mark: ['Coherence: steps in a logical, easy-to-follow order.'], simple: 'The plan, in order. Your paper draft already has four boxes for this; turn them into sentences.', example: 'First, we wrote a closed question with a number answer. Then every team in the club answered it. Next, we found the mean, median, mode and range for each group and drew histograms. Finally, we compared our team with the club.' },
+  collect: { doc: 'Describe steps to collecting, collating and analysing data', mark: ['Depth: all steps are discussed: designing, collecting data, data analysis and results.', 'Coherence: order of investigation steps described logically.'], simple: 'What actually happened: how answers were gathered, how they were organised in Excel, and how you worked things out.', example: 'Each player filled in an online form. The answers went into a spreadsheet, were sorted from smallest to largest and counted in a frequency table. We used Excel formulas to find the mean, median, mode and range, and drew a histogram for each group.' },
+  describe: { doc: 'Describe the data using measures of centre, spread and shape / skew', mark: ['Accuracy: calculations done accurately in Excel and described in written paragraphs.'], simple: 'Describe your class with numbers: the middle (mean, median, mode), how spread out (range), and the shape of the histogram.', example: 'Our team had a mean shoe size of 8.4, a median of 8 and a mode of 8. The range was 4 (sizes 6 to 10). The histogram is slightly positively skewed, because one player wears size 10, which pulls the mean above the median.' },
+  compare: { doc: 'Compare your class results with another class and the entire cohort', mark: ['Accuracy: numbers described correctly.', 'Include histograms from your Excel analysis (the Word file adds them after this part).'], simple: 'Put 8E next to 8G and next to all Year 8s. Same measures, and say how big the differences are.', example: 'Our team\'s mean (8.4) was 0.3 higher than the other team (8.1) and 0.2 higher than the whole club (8.2). Our range (4) was smaller than the club\'s (7), so our sizes are less spread out. Both histograms peak at size 8.' },
+  solveend: { doc: 'Draw conclusions using your data to answer the original question', mark: ['Depth: results are linked to the question.'], simple: 'Based only on the numbers so far: is 8E like the average Year 8 class or not?', example: 'Because our mean and median are within 0.3 of the club\'s, our team is fairly typical of the club for shoe size.' },
+  reasonable: { doc: 'Discuss whether you think your conclusions are reasonable.', mark: ['Analyse data to describe patterns, trends and relationships.'], simple: 'Should anyone believe your conclusion? What in your data or assumptions makes it stronger or weaker?', example: 'I think the conclusion is mostly reasonable, but one player answered size 2, which is probably a mistake and lowers our mean.' },
+  census: { doc: 'Discussed ideas around sample data and census data and their effect on evidence', mark: ['Explain the implications of obtaining data through sampling.'], simple: 'Sample = some of the group. Census = all of the group. Say which you used and how that changes how much you can trust the evidence.', example: 'Our team is a sample of the club, because it is only 12 of the 96 players. A census would ask every player, which is more accurate but takes longer. Because ours is a sample, our results may not match the whole club exactly.' },
+  strengths: { doc: 'Identified strengths and limitations of the investigation approach', mark: ['Strengths AND limitations both needed.'], simple: 'What went well about how you did it, and what made the data less trustworthy.', example: 'A strength was that every team answered the same closed question, so the answers were easy to compare. A limitation was that some players did not answer, so the club data is not complete.' },
+  improve: { doc: 'Suggested improvements to your investigation', mark: ['Accuracy: the improvements specifically address the limitations you identified.'], simple: 'For EACH limitation you wrote, one change that would fix it. Match them up.', example: 'To fix players not answering, next time the survey could be done at training so everyone fills it in at the same time.' },
+  size: { doc: 'Depth: the importance of the difference in data set sizes has been discussed', mark: ['Depth: why the difference in data set sizes matters.'], simple: '8E is small, all Year 8s is big. Why does that matter when you compare them?', example: 'Our team has 12 players but the club has 96. In a group of 12, one unusual answer changes the mean a lot, but in 96 it hardly changes it, so the club results are more reliable.' },
+  restate: { doc: 'Restated the context and aim of your investigation', mark: ['Coherence: connects the question, data analysis and conclusion.'], simple: 'Remind the reader what you investigated and why, in one or two sentences.', example: 'This investigation looked at whether our netball team\'s shoe sizes are typical of all Under 14 players in the club.' },
+  evidence: { doc: 'Summarised the evidence you used to draw conclusions', mark: ['Accuracy: specific measures (centre, spread, etc.) used to justify conclusions.'], simple: 'Your strongest one or two numbers, and what they showed.', example: 'Our mean (8.4) was close to the club mean (8.2), and our range (4) was smaller than the club\'s (7).' },
+  answer: { doc: 'Answered the original investigation question', mark: ['Depth: links to observations, assumptions and data outcomes.'], simple: 'Yes or no to the investigation question, plus how sure you are and why.', example: 'So our team can mostly represent the club for shoe size, but because we are a small sample, one or two unusual answers could change this.' },
+};
+const STANDARDS = [['Significance', 'Focusing on the important, not the trivial.'], ['Accuracy', 'Free from errors or distortions. True. Correct.'], ['Clarity', 'Understandable. The meaning can be grasped.'], ['Depth', 'Containing complexities and interrelationships.'], ['Relevance', 'Relating to the matter at hand.'], ['Precision', 'Exact to the necessary level.'], ['Coherence', 'Logical. Orderly. The parts make sense together.'], ['Breadth', 'Encompassing multiple viewpoints.']];
+// The boxes under each heading in the document, word for word: [left column, right column].
+const BOXES = {
+  intro: { top: ['Conduct statistical investigations and explain the implications of obtaining data through sampling with accuracy, coherency and depth for simple and complex scenarios'], l: ['Describe the aim of the investigation.', 'Describe observations to give investigation context', 'Describe assumptions and what needs to be considered before beginning'], r: ['Describe the steps needed to investigate the process', 'Coherence: purpose and approach to investigation described in a logical, easy-to-follow way', 'Depth: observations and assumptions show thoughtful consideration of'] },
+  solve: { top: ['Analyse and describe the distribution of data with accuracy, coherency and depth for simple and complex scenarios', 'Compare the variation in distributions of random samples of the same and different size from a given population with accuracy, coherency and depth in respect to shape, measures of central tendency and range for simple and complex scenarios', 'Conduct statistical investigations and explain the implications of obtaining data through sampling with accuracy, coherency and depth for simple and complex scenarios'], l: ['Describe steps to collecting, collating and analysing data', 'Describe the data using measures of centre, spread and shape / skew', 'Include histograms from your Excel analysis to clearly illustrate what the data distribution looks like', 'Compare your class results with another class and the entire cohort'], r: ['Draw conclusions using your data to answer the original question', 'Accuracy: calculations have been completed accurately in Excel and described in written paragraphs', 'Coherence: order of investigation steps described in a logical, easy-to-follow way', 'Depth: all steps are discussed, including designing, collecting data, data analysis and results'] },
+  eval: { top: ['Conduct statistical investigations and explain the implications of obtaining data through sampling with accuracy, coherency and depth for simple and complex scenarios', 'Analyse data and information to describe patterns, trends and relationships with accuracy, coherency and depth for simple and complex scenarios'], l: ['Discuss whether you think your conclusions are reasonable.', 'Discussed ideas around sample data and census data and their effect on evidence', 'Identified strengths and limitations of the investigation approach', 'Suggested improvements to your investigation'], r: ['Accuracy: The suggested improvements specifically address the limitations you have identified', 'Depth: The importance of the difference in data set sizes has been discussed'] },
+  concl: { top: ['Conduct statistical investigations and explain the implications of obtaining data through sampling with accuracy, coherency and depth for simple and complex scenarios'], l: ['Restated the context and aim of your investigation', 'Summarised the evidence you used to draw conclusions', 'Answered the original investigation question'], r: ['Depth: conclusions demonstrate meaningful links to observations, assumptions and data outcomes.', 'Coherence: ideas are logically organised, connecting question, data analysis, and conclusion clearly.', 'Accuracy: specific measures (centre, spread, etc) used to justify conclusions'] },
+};
+const NEEDS_DATA = ['describe', 'compare', 'solveend', 'obs', 'size', 'evidence', 'reasonable'];
+
+// Specific next steps for an answer, without writing it.
+function feedback(p, t) {
+  const out = [], n = words(t);
+  if (!n) return ['Nothing written yet. Start with the first step on the left, even one rough sentence.'];
+  if (/\[|\]/.test(t)) out.push('There are still [brackets] from a sentence starter: replace them with your own words.');
+  p.checks.forEach(([l, re]) => { if (!re.test(t)) out.push(`Add: ${l}.`); });
+  if (NEEDS_DATA.includes(p.id) && !/\d/.test(t)) out.push('Use at least one number from your Excel sheet: the marker checks accuracy.');
+  if (n < 20) out.push(`Only ${n} words. Add a "because…" sentence that explains why.`);
+  if (!/because|so |which means|this shows|therefore/i.test(t) && n >= 20) out.push('Add a reason word ("because", "this shows", "so") to show depth, not just facts.');
+  if (/\b(yr|avg|hrs|bc|u)\b/i.test(t)) out.push('Write words in full (Year, average, hours, because): it is a formal report.');
+  if (/\bi\b/.test(t)) out.push('Capital "I".');
+  return out.length ? out : ['Looks complete for this part. Read it aloud once: does each sentence make sense on its own?'];
+}
+
 // ---------- page ----------
-export function report({ view, esc, toast }) {
+let ctx;
+export function report(c) {
+  ctx = c; const { view, esc } = c;
   clearInterval(tick);
-  const p = PARTS[cur], st = groupStats(R.q), unit = UNITS[R.q], money = R.q === 1 ? '$' : '';
-  const text = R.a[p.id] || '';
+  const box = (k) => { const b = BOXES[k]; return `<table class="rp-box"><tr><td colspan="2"><ul>${b.top.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></td></tr><tr><td><ul>${b.l.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></td><td><ul>${b.r.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></td></tr></table>`; };
+  const field = (p) => { const i = PARTS.indexOf(p); return `<div class="rp-field ${i === cur ? 'on' : ''}" data-i="${i}"><div class="rp-q">${esc(HELP[p.id].doc)}</div><textarea data-i="${i}" rows="${p.id === 'survey' ? 1 : 4}" placeholder="Click here and write. Help appears on the right.">${esc(R.a[p.id] || '')}</textarea></div>`; };
   view.innerHTML = `
     <div class="rp-timer card"><b id="rp-left">${left()}</b><span class="small muted" id="rp-pace">${esc(pace())}</span></div>
-    <h1>PSMT final report</h1>
-    <p class="muted small">Write every answer in your own words; the Word file saves your typing straight into the real assignment layout. Everything saves as you type, in this browser.</p>
-    <div class="card row">
-      <label>Your name <input id="rp-name" value="${esc(R.name)}" size="16"></label>
-      <label>Teacher <input id="rp-teacher" value="${esc(R.teacher)}" size="12"></label>
+    <div class="card row" style="margin-bottom:14px">
       <label>Survey question <select id="rp-q">${SURVEY_QUESTIONS.map((q, i) => `<option value="${i}" ${i === R.q ? 'selected' : ''}>${esc(q)}</option>`).join('')}</select></label>
-      <span class="pill" id="rp-words">${totalWords()} words (aim 400–600)</span>
+      <span class="pill" id="rp-words">${totalWords()} words written</span>
+      <label class="small"><input type="checkbox" id="rp-hist" ${R.hist ? 'checked' : ''}> Add histograms to the Word file</label>
+      <button class="btn" id="rp-docx">Download Word document</button><button class="btn alt" id="rp-txt">Backup (.txt)</button><button class="btn alt" id="rp-copy">Copy all</button>
     </div>
     <div class="rp-wrap">
-      <ol class="rp-list">${PARTS.map((x, i) => `<li class="${i === cur ? 'on' : ''} ${words(R.a[x.id]) >= 15 ? 'done' : ''}" data-i="${i}">${esc(x.title)}</li>`).join('')}</ol>
-      <div>
-        <div class="card">
-          <p class="small muted">Part ${cur + 1} of ${PARTS.length}</p>
-          <h2 style="margin-top:0">${esc(p.title)}</h2>
-          <p>${esc(p.ask)}</p>
-          <h3>Do it step by step</h3><ol>${p.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-          ${p.draft.length ? `<h3>From your paper draft</h3>${p.draft.map((d) => `<p class="small rp-draft">${esc(d)}</p>`).join('')}` : ''}
-          ${p.starters.length ? `<details><summary>Stuck? Show sentence starters</summary><p class="small muted">Replace every [bracket] with your own words and numbers. Don't copy the brackets.</p><ul>${p.starters.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></details>` : ''}
-          <textarea id="rp-text" rows="9" placeholder="Type your answer here…">${esc(text)}</textarea>
-          <div class="row small"><span id="rp-pw">${words(text)} words</span>${p.checks.map(([l, re]) => `<span class="rp-chk ${re.test(text) ? 'ok' : ''}" data-l="${esc(l)}">${re.test(text) ? 'Has' : 'Missing'}: ${esc(l)}</span>`).join('')}</div>
-          <div class="row" style="margin-top:10px">${cur ? '<button class="btn alt" id="rp-prev">Back</button>' : ''}${cur < PARTS.length - 1 ? '<button class="btn" id="rp-next">Next part</button>' : ''}</div>
-        </div>
-        ${['describe', 'compare', 'solveend', 'obs', 'size', 'evidence'].includes(p.id) ? `<div class="card" style="margin-top:14px"><h3 style="margin-top:0">Data card: ${esc(SURVEY_QUESTIONS[R.q])}</h3>
-          <p class="small muted">Check these against your Excel sheet ("8E Data collection (Hives) - with graphs.xlsx" in Downloads).</p>
-          <table><tr><th></th><th>Count</th><th>Mean</th><th>Median</th><th>Mode</th><th>Lowest</th><th>Highest</th><th>Range</th></tr>
-          ${st.map((s) => `<tr><th>${s.g}</th><td>${s.n}</td><td>${money}${s.mean}</td><td>${money}${s.median}</td><td>${money}${s.mode}</td><td>${money}${s.min}</td><td>${money}${s.max}</td><td>${money}${s.range}${unit}</td></tr>`).join('')}</table>
-          <div class="grid">${st.map((s, i) => `<div><p class="small"><b>${s.g}</b></p><canvas data-h="${i}" width="420" height="240"></canvas></div>`).join('')}</div></div>` : ''}
-        <div class="card" style="margin-top:14px">
-          <h3 style="margin-top:0">Finish</h3>
-          <label class="small"><input type="checkbox" id="rp-hist" ${R.hist ? 'checked' : ''}> Put the three histograms into the Word file (after the comparison). Untick if you paste your Excel graphs in yourself.</label>
-          <div class="row" style="margin-top:10px"><button class="btn" id="rp-docx">Download Word document (.docx)</button><button class="btn alt" id="rp-txt">Download backup (.txt)</button><button class="btn alt" id="rp-copy">Copy all answers</button></div>
-          <p class="small muted">If the Word download fails: download the backup, open the assignment in Word, and paste each part under its heading.</p>
-        </div>
+      <div class="rp-doc">
+        <table class="rp-head"><tr><td rowspan="2"><b>2026</b></td><td><b>Student name:</b> <input id="rp-name" value="${esc(R.name)}"></td><td><b>Class: 8E</b></td></tr>
+          <tr><td><b>Teacher name:</b> <input id="rp-teacher" value="${esc(R.teacher)}"></td><td><b>Final due:</b> 13 November 2026</td></tr></table>
+        <div class="rp-std">${STANDARDS.map(([h, t]) => `<div><b>${h}</b><span>${t}</span></div>`).join('')}</div>
+        <p class="rp-big"><b>Investigation question:</b> Can we use the opinions of our class to represent the “average” Year 8 class?</p>
+        <p class="rp-big"><b>Survey question investigated:</b></p>
+        ${field(PARTS[0])}
+        ${Object.entries(SECTIONS).map(([k, h]) => `<h2 class="rp-h">${h}</h2>${box(k)}${PARTS.filter((p) => p.sec === k).map((p) => field(p) + (p.id === 'compare' && R.hist ? '<p class="rp-q">[The three histograms go here in the Word file]</p>' : '')).join('')}`).join('')}
       </div>
+      <aside class="rp-help card" id="rp-help"></aside>
     </div>`;
-
   const $ = (s) => view.querySelector(s);
-  view.querySelectorAll('canvas[data-h]').forEach((c) => drawHist(c, st[c.dataset.h].xs, R.q));
   tick = setInterval(() => { if (!document.body.contains($('#rp-left'))) return clearInterval(tick); $('#rp-left').textContent = left(); $('#rp-pace').textContent = pace(); }, 1000);
-  const ta = $('#rp-text');
-  ta.oninput = () => {
-    R.a[p.id] = ta.value; save();
-    $('#rp-pw').textContent = `${words(ta.value)} words`; $('#rp-words').textContent = `${totalWords()} words (aim 400–600)`;
-    view.querySelectorAll('.rp-chk').forEach((el, i) => { const ok = p.checks[i][1].test(ta.value); el.classList.toggle('ok', ok); el.textContent = `${ok ? 'Has' : 'Missing'}: ${p.checks[i][0]}`; });
-  };
-  ta.focus();
-  if (p.id === 'survey' && !text) ta.placeholder = `e.g. the exact wording of "${SURVEY_QUESTIONS[R.q]}" from the survey`;
-  const rerender = () => report({ view, esc, toast });
+  view.querySelectorAll('.rp-doc textarea').forEach((ta) => {
+    const grow = () => { ta.style.height = 'auto'; ta.style.height = `${ta.scrollHeight + 2}px`; }; grow();
+    ta.onfocus = () => { if (cur !== Number(ta.dataset.i)) { cur = Number(ta.dataset.i); view.querySelectorAll('.rp-field').forEach((f) => f.classList.toggle('on', Number(f.dataset.i) === cur)); help(); } };
+    ta.oninput = () => { R.a[PARTS[ta.dataset.i].id] = ta.value; save(); grow(); $('#rp-words').textContent = `${totalWords()} words written`; liveChecks(); };
+  });
   $('#rp-name').oninput = (e) => { R.name = e.target.value; save(); };
   $('#rp-teacher').oninput = (e) => { R.teacher = e.target.value; save(); };
-  $('#rp-q').onchange = (e) => { R.q = Number(e.target.value); save(); rerender(); };
-  $('#rp-hist').onchange = (e) => { R.hist = e.target.checked; save(); };
-  view.querySelectorAll('.rp-list li').forEach((li) => (li.onclick = () => { cur = Number(li.dataset.i); rerender(); }));
-  if ($('#rp-prev')) $('#rp-prev').onclick = () => { cur--; rerender(); };
-  if ($('#rp-next')) $('#rp-next').onclick = () => { cur++; rerender(); };
+  $('#rp-q').onchange = (e) => { R.q = Number(e.target.value); save(); report(ctx); };
+  $('#rp-hist').onchange = (e) => { R.hist = e.target.checked; save(); report(ctx); };
   $('#rp-txt').onclick = () => download(new Blob([plainText()], { type: 'text/plain' }), 'PSMT report answers (backup).txt');
-  $('#rp-copy').onclick = () => navigator.clipboard.writeText(plainText()).then(() => toast('All answers copied'), () => toast('Copy failed: use the backup download'));
+  $('#rp-copy').onclick = () => navigator.clipboard.writeText(plainText()).then(() => c.toast('All answers copied'), () => c.toast('Copy failed: use the backup download'));
   $('#rp-docx').onclick = async () => {
     try {
-      const tpl = new Uint8Array(await (await fetch(TEMPLATE)).arrayBuffer());
+      const st = groupStats(R.q), tpl = new Uint8Array(await (await fetch(TEMPLATE)).arrayBuffer());
       const imgs = R.hist ? await Promise.all(st.map(async (s) => ({ title: `${s.g}: ${SURVEY_QUESTIONS[R.q]}`, png: await histPng(s.xs, R.q) }))) : [];
       download(new Blob([await buildDocx(tpl, R, imgs)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `3.8 Maths Assignment (Data) Final submission - ${R.name || 'me'}.docx`);
-      toast('Word document downloaded');
-    } catch (e) { console.error(e); toast('Word export failed: downloading the backup instead'); $('#rp-txt').click(); }
+      c.toast('Word document downloaded');
+    } catch (e) { console.error(e); c.toast('Word export failed: downloading the backup instead'); $('#rp-txt').click(); }
   };
+  help();
+}
+
+// The help panel for the part being written. Re-rendered on focus change only, so typing keeps its place.
+function help() {
+  const { view, esc } = ctx, p = PARTS[cur], h = HELP[p.id], el = view.querySelector('#rp-help');
+  const st = groupStats(R.q), money = R.q === 1 ? '$' : '';
+  el.innerHTML = `
+    <p class="small muted">Part ${cur + 1} of ${PARTS.length} · ${esc(p.title)}</p>
+    <h3 style="margin-top:0">${esc(h.doc)}</h3>
+    <p><b>In plain words:</b> ${esc(h.simple)}</p>
+    <p class="small"><b>What you need to write:</b> ${esc(p.ask)}</p>
+    <h4>Step by step</h4><ol class="small">${p.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+    <h4>The marker checks</h4><ul class="small">${h.mark.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>
+    ${p.draft.length ? `<h4>From your paper draft</h4>${p.draft.map((d) => `<p class="small rp-draft">${esc(d)}</p>`).join('')}` : ''}
+    <div class="row small" id="rp-chks"></div>
+    <details><summary>See an example on a different topic</summary><p class="small rp-ex">${esc(h.example)}</p><p class="small muted">This is about shoe sizes, not your data: use it to see the style, then write yours about ${esc(SURVEY_QUESTIONS[R.q].toLowerCase())}.</p></details>
+    ${p.starters.length ? `<details><summary>Sentence starters</summary><p class="small muted">Replace every [bracket] with your own words and numbers.</p><ul class="small">${p.starters.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></details>` : ''}
+    <div class="row" style="margin-top:10px"><button class="btn alt" id="rp-check">Check my answer</button>${cur < PARTS.length - 1 ? '<button class="btn" id="rp-next">Next part</button>' : ''}</div>
+    <ul class="small" id="rp-fb"></ul>
+    ${NEEDS_DATA.includes(p.id) ? `<h4>Your data: ${esc(SURVEY_QUESTIONS[R.q])}</h4><p class="small muted">Check against your Excel sheet.</p>
+      <table class="small"><tr><th></th><th>Count</th><th>Mean</th><th>Median</th><th>Mode</th><th>Range</th></tr>
+      ${st.map((s) => `<tr><th>${s.g}</th><td>${s.n}</td><td>${money}${s.mean}</td><td>${money}${s.median}</td><td>${money}${s.mode}</td><td>${money}${s.range}</td></tr>`).join('')}</table>
+      ${st.map((s, i) => `<p class="small"><b>${s.g}</b> (lowest ${money}${s.min}, highest ${money}${s.max})</p><canvas data-h="${i}" width="380" height="200"></canvas>`).join('')}` : ''}`;
+  el.querySelectorAll('canvas[data-h]').forEach((cv) => drawHist(cv, st[cv.dataset.h].xs, R.q));
+  el.querySelector('#rp-check').onclick = () => { el.querySelector('#rp-fb').innerHTML = feedback(p, R.a[p.id] || '').map((f) => `<li>${esc(f)}</li>`).join(''); };
+  const nx = el.querySelector('#rp-next'); if (nx) nx.onclick = () => view.querySelector(`.rp-doc textarea[data-i="${cur + 1}"]`).focus();
+  liveChecks();
+}
+function liveChecks() {
+  const p = PARTS[cur], t = R.a[p.id] || '', el = ctx.view.querySelector('#rp-chks');
+  if (el) el.innerHTML = p.checks.map(([l, re]) => `<span class="rp-chk ${re.test(t) ? 'ok' : ''}">${re.test(t) ? 'Has' : 'Missing'}: ${ctx.esc(l)}</span>`).join('');
 }
 
 function plainText() {
