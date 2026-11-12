@@ -2,6 +2,7 @@ import { EXAMS, GERMAN, READINGS, SURVEY, SURVEY_QUESTIONS, GAMES, PSMT, SOURCES
 import { TOPICS, checkMaths, nearMaths, stats } from './maths.js';
 import { DRILLS, checkGerman, checkMeaning, variants } from './german.js';
 import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
+import { report } from './report.js';
 import { TRICKS, WORD_TIPS, WORD_HOOKS, READING_TRICKS, LETTER_TRICKS, PSMT_TRICKS } from './tricks.js';
 
 // ---------- state ----------
@@ -553,6 +554,7 @@ function home() {
       <div class="card click" data-go="teach"><h3>No idea where to start?</h3><p class="muted small">Lessons that go one small step at a time, before any questions.</p><button class="btn">Teach me</button></div>
       <div class="card click" data-go="ger"><h3>German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
       <div class="card click" data-go="mat"><h3>Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
+      <div class="card click" data-go="report"><h3>PSMT final report: due 3:00 pm today</h3><p class="muted small">Write it part by part with your draft notes, then download the Word document.</p><button class="btn">Write the report</button></div>
       <div class="card click" data-go="psmt"><h3>PSMT due Fri 13 Nov</h3><p class="muted small">Check your own survey calculations before you write the report.</p><button class="btn">Open PSMT lab</button></div>
       <div class="card ${S.mistakes?.length ? 'click' : 'locked'}" data-go="mistakes"><h3>My mistakes (${S.mistakes?.length || 0})</h3><p class="muted small">Every question you got wrong, until you get it right.</p><button class="btn" ${S.mistakes?.length ? '' : 'disabled'}>Redo them</button></div>
     </div>
@@ -563,6 +565,7 @@ function home() {
   view.querySelector('[data-go=ger]').onclick = () => play({ title: 'Mixed German', next: germanMix(), limit: 20 });
   view.querySelector('[data-go=mat]').onclick = () => play({ title: 'Mixed Maths', next: mixedMaths(Object.keys(TOPICS)), limit: 20 });
   view.querySelector('[data-go=psmt]').onclick = () => (location.hash = '#psmt');
+  view.querySelector('[data-go=report]').onclick = () => (location.hash = '#report');
   view.querySelector('[data-go=teach]').onclick = () => (location.hash = '#teach');
   view.querySelector('[data-go=mistakes]').onclick = () => mistakesRound();
   $('#next-step').onclick = () => nextStep().run();
@@ -1182,7 +1185,8 @@ function launch(game) {
 }
 
 // ---------- router ----------
-const ROUTES = { home, teach, german, maths, psmt, boss: bosses, arcade };
+function reportPage() { studying = 'maths'; report({ view, esc, toast }); }
+const ROUTES = { home, teach, german, maths, psmt, report: reportPage, boss: bosses, arcade };
 function route() {
   studying = null;
   if (session) { clearInterval(session.timer); session = null; }
