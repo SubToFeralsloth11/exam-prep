@@ -1,13 +1,14 @@
 // Content pulled 2026-11-08 from DayMap, Stile, Education Perfect and the Year 8 Maths OneNote (Mr Hives).
 // Regenerate by re-running the sync; do not hand-edit the word lists.
 
-export const SOURCES = 'DayMap tasks, Stile "Unit 8 – Was feiert man in Deutschland?", Education Perfect 8E German tasks, OneNote "2026 – Year 8 Maths" Term 4 planner and pages, and your class survey spreadsheet.';
+export const SOURCES = 'DayMap tasks, Stile "Unit 8 – Was feiert man in Deutschland?", Stile "Unit 6: Earth Science - Plate Tectonics", Education Perfect 8E German tasks, OneNote "2026 – Year 8 Maths" Term 4 planner and pages, and your class survey spreadsheet.';
 
 // Brisbane time (UTC+10). `note` carries what the teacher wrote on DayMap.
 export const EXAMS = [
   { id: 'psmt', subject: 'Maths', name: 'Maths PSMT – Statistics investigation report', due: '2026-11-13T14:12:00+10:00', note: 'Submit the final typed report on DayMap (400–600 words, up to 6 pages).' },
   { id: 'ger', subject: 'German', name: 'German exam – reading comprehension (Unit 8 Geburtstag & Feiern)', due: '2026-11-11T09:00:00+10:00', note: 'DayMap: "Exam is scheduled for Week 8. Please discuss with your teacher for more precise information." Week 8 lessons: Wed 25 Nov & Thu 26 Nov. Study as if it is 11 Nov.' },
   { id: 'mat', subject: 'Maths', name: 'Maths exam – Term 4 (percentages, ratios, rates, statistics)', due: '2026-11-25T14:10:00+10:00', note: 'Term 4 planner: exam in Week 8.' },
+  { id: 'sci', subject: 'Science', name: 'Science exam – Unit 6 Earth Science (plate tectonics)', due: '2026-11-19T11:40:00+10:00', note: 'DayMap: SA5_8_Science_Earth_Exam (Ms Woolmer), DayMap due date Fri 20 Nov 2:33 pm. Sitting it in Thursday\'s science lesson.' },
 ];
 
 export const GERMAN = {
