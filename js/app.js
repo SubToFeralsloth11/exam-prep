@@ -884,16 +884,26 @@ function markTaught(key) {
 // Steps through cards one line at a time. Enter / → goes forward, ← goes back.
 function runCards(title, cards, onDone) {
   studying = Object.keys(COURSES).find((cn) => COURSES[cn].keys.some((k) => title.startsWith(k))) || (title.includes('German') || !Object.keys(TOPICS).some((t) => title.includes(t)) ? 'german' : 'maths');
-  let c = 0, l = 0;
+  let c = 0, l = 0, shown = -1;
   const fwd = () => { if (l + 1 < cards[c].s.length) l++; else if (c + 1 < cards.length) { c++; l = 0; } else { document.onkeydown = null; return onDone(); } draw(); };
   const back = () => { if (l > 0) l--; else if (c > 0) { c--; l = cards[c].s.length - 1; } draw(); };
+  // Within one part only the steps, bar and buttons change, so an embedded clip keeps playing.
   const draw = () => {
     const card = cards[c], last = l + 1 >= card.s.length;
+    const steps = card.s.slice(0, l + 1).map((x) => `<li>${esc(x)}</li>`).join('');
+    const bar = `width:${((c + (l + 1) / card.s.length) / cards.length) * 100}%`;
+    const label = !last ? 'Next step' : c + 1 < cards.length ? 'Next part' : 'Done';
+    if (shown === c && $('#fwd')) {
+      $('.steps', view).innerHTML = steps; $('.bar i', view).style.cssText = bar;
+      $('#back').disabled = !(c || l); $('#fwd').textContent = label; $('#fwd').focus();
+      return;
+    }
+    shown = c;
     view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(title)}</span>
-      <p class="muted small" style="margin-top:10px">Part ${c + 1} of ${cards.length}</p><div class="bar"><i style="width:${((c + (l + 1) / card.s.length) / cards.length) * 100}%"></i></div>
-      <div class="card lesson"><h2>${esc(card.t)}</h2><ol class="steps">${card.s.slice(0, l + 1).map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+      <p class="muted small" style="margin-top:10px">Part ${c + 1} of ${cards.length}</p><div class="bar"><i style="${bar}"></i></div>
+      <div class="card lesson"><h2>${esc(card.t)}</h2><ol class="steps">${steps}</ol>
         ${card.html || ''}</div>
-      <div class="row"><button class="btn alt" id="back" ${c || l ? '' : 'disabled'}>Back</button><button class="btn" id="fwd">${!last ? 'Next step' : c + 1 < cards.length ? 'Next part' : 'Done'}</button></div>
+      <div class="row"><button class="btn alt" id="back" ${c || l ? '' : 'disabled'}>Back</button><button class="btn" id="fwd">${label}</button></div>
       <p class="small muted">Tip: press Enter or the right arrow key to go on, the left arrow key to go back.</p></div>`;
     $('#quit').onclick = (e) => { e.preventDefault(); document.onkeydown = null; route(); };
     $('#back').onclick = back; $('#fwd').onclick = fwd; $('#fwd').focus();

@@ -7,6 +7,9 @@
 // Each topic: lesson (teaching cards), tips (memory tricks), cards (flashcards), qs (questions).
 // Question: { q, a, wrong? (→ multiple choice), alts? (other accepted typed answers), why: steps }
 
+// YouTube scene embed (privacy-enhanced). Clips stay on YouTube; nothing is re-hosted here.
+const clip = (id) => `<div class="clip"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0" title="Film scene" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`;
+
 export const ENG_TOPICS = {
   'HFTW plot & characters': {
     lesson: [
@@ -312,6 +315,42 @@ export const ENG_TOPICS = {
       { q: 'What does Hec say after Ricky reads his haiku?', a: '"I liked it."', wrong: ['"Shut it."', '"That\'s dumb."', '"No child left behind."'], why: ['"That\'s the first time I\'ve heard my name in a poem. I liked it."'] },
       { q: 'Why is Hec\'s haiku a big deal for his character?', a: 'He has learned to read and write and can share his feelings', wrong: ['He hates poetry', 'He wrote it in prison for Paula', 'It is about Bella\'s death'], why: ['Ricky inspired him; it shows how far he has changed.'] },
       { q: 'Where are Ricky and Hec when Ricky reads his haiku about Hec?', a: 'Psycho Sam\'s hut', wrong: ['Bella\'s farm kitchen', 'Kahu\'s house', 'A police car'], why: ['They lie in bunk beds after a long time running (Chapter 9).'] },
+    ],
+  },
+
+  'Watch & listen: film scenes': {
+    lesson: [
+      { t: 'Hear the characters yourself', s: ['Each part has a real scene from the film (YouTube clips; needs internet).', 'Press play, listen for the dialogue, then step through what to notice.', 'Quoting what you HEAR in a scene is the best evidence for your exam paragraph.'] },
+      { t: '"A real bad egg": Paula meets Bella', html: clip('Pn0g3lQxT-Y'), s: ['Paula lists Ricky\'s crimes to Bella: disobedience, stealing, spitting, running away, throwing rocks, kicking stuff, smashing stuff, burning stuff, loitering, graffiti.', 'A quick montage shows each "crime": this is comedy through editing.', 'Paula talks about Ricky in front of him as if he is a file, not a kid (Authority thesis).', 'Bella answers warmly. The label "bad egg" is what the film sets out to prove wrong (Teenagers thesis).'] },
+      { t: 'Bella\'s birthday song', html: clip('us6ZcvCcYoo'), s: ['Bella throws Ricky a birthday party and sings him a song she made up, playing guitar.', 'It is awkward and funny, but Ricky is moved: nobody has done this for him before.', 'This is the moment Ricky starts to belong (Family thesis).', 'Notice the close-ups on Ricky\'s face: his reaction matters more than the song.'] },
+      { t: 'The minister at Bella\'s funeral', html: clip('dVo4xWsWjnc'), s: ['Taika Waititi himself plays the minister.', 'His rambling sermon about "two doors" makes no sense, so a sad scene turns funny.', 'Waititi mixes humour and grief all through the film: comedy helps us cope with loss.', 'Exam use: a film technique point about tone (humour in a serious moment).'] },
+      { t: '"No child left behind"', html: clip('VPiBdkYLNMk'), s: ['Paula repeats her slogan: "No child left behind."', 'She says it about catching Ricky, not caring for him: the slogan sounds kind but she uses it like a threat.', 'Repetition makes her a comic villain (Authority thesis: authority that fails Ricky).'] },
+      { t: 'The Terminator stand-off', html: clip('EWr6neD5zo8'), s: ['Paula and Andy find Ricky across a steep gully. Ricky: "I\'m not going back. I\'m not going to juvie."', 'Paula: "You are playing with a bag of snakes, boy… Got the whole country looking for you."', 'Ricky: "I\'ll never stop running." Paula: "I\'ll never stop chasing you. I\'m relentless. I\'m like the Terminator."', 'Ricky: "I\'m more like Terminator than you." The pop-culture argument shows Ricky standing up to authority (Teenagers + Authority).'] },
+      { t: 'Ricky meets Kahu', html: clip('jNm8uRMYwfg'), s: ['Ricky goes for help for the sick man in the hut: "He can\'t walk and he\'s having trouble breathing."', 'Kahu calls him "freaky kid" but helps him straight away.', 'Ricky choosing to get help for a stranger proves he is NOT just a bad egg (Teenagers thesis).'] },
+      { t: 'Scattering Bella\'s ashes', html: clip('85Wh-ZYU1Lw'), s: ['Ricky and Hec scatter Bella\'s ashes in the bush, the place she belonged.', 'Wide shots of the landscape make the two look small together in a huge land.', 'Their shared grief for Bella is what starts to bind them as family (Family thesis).'] },
+    ],
+    tips: [
+      { t: 'Hear it, quote it', s: ['After each clip, say one line of dialogue out loud from memory.', 'A short exact quote ("I\'m like the Terminator") beats a long vague summary.'], do: 'Pick one clip per thesis and learn one quote from it.' },
+      { t: 'Clip → thesis', s: ['Bad egg + Terminator + Kahu → Teenagers.', 'Bad egg + No child left behind + Terminator → Authority figures.', 'Birthday song + Bella\'s ashes → Family.'] },
+    ],
+    cards: [
+      ['"I\'m like the Terminator." Who says it?', 'Paula, chasing Ricky across the gully.'],
+      ['Ricky\'s reply in the Terminator scene', '"I\'m more like Terminator than you."'],
+      ['"You are playing with a bag of snakes, boy."', 'Paula to Ricky, warning him the whole country is looking for him.'],
+      ['"I\'m not going to juvie."', 'Ricky, refusing to go back with Paula.'],
+      ['Who plays the minister at Bella\'s funeral?', 'Taika Waititi (the director).'],
+      ['What does Bella do for Ricky\'s birthday?', 'Throws a party and sings him a song she made up, with a guitar.'],
+      ['Kahu\'s first name for Ricky', '"Freaky kid"'],
+    ],
+    qs: [
+      { q: 'In the Terminator scene, who says "I\'m relentless. I\'m like the Terminator"?', a: 'Paula', wrong: ['Hec', 'Ricky', 'Andy'], why: ['Paula says it; Ricky answers "I\'m more like Terminator than you."'] },
+      { q: 'What does Ricky say he will never do in the gully scene?', a: 'Stop running', wrong: ['Go back to the farm', 'Write another haiku', 'Leave Hec'], why: ['"I\'ll never stop running." Paula: "I\'ll never stop chasing you."'] },
+      { q: 'Paula warns Ricky he is "playing with a bag of…"', a: 'Snakes', wrong: ['Rocks', 'Eggs', 'Bees'], why: ['"You are playing with a bag of snakes, boy. A big bag with a lot of holes in it."'] },
+      { q: 'How does the "bad egg" scene make Ricky\'s crimes funny?', a: 'A quick montage shows each crime as Paula lists it', wrong: ['Hec reads them aloud', 'Sad music plays', 'Ricky sings them'], why: ['Editing (a fast montage) turns a list of crimes into comedy.'] },
+      { q: 'Which thesis does Bella\'s birthday song best support?', a: 'Family', wrong: ['Authority figures', 'Teenagers only', 'None'], why: ['It is the first time Ricky feels he belongs and is cared for.'] },
+      { q: 'Why is the minister scene at Bella\'s funeral funny?', a: 'His rambling sermon makes no sense, mixing humour with grief', wrong: ['Ricky falls in the grave', 'Paula interrupts it', 'Hec sings'], why: ['Waititi (who plays the minister) mixes comedy and sadness through the film.'] },
+      { q: 'Paula\'s slogan "No child left behind" mostly shows that she…', a: 'Cares more about catching Ricky than caring for him', wrong: ['Loves Ricky like a mother', 'Wants Ricky to stay with Hec', 'Is a bushman'], why: ['The kind-sounding slogan is used like a threat: authority that fails Ricky.'] },
+      { q: 'What does Ricky ask Kahu to help with?', a: 'Getting help for a sick man in a hut', wrong: ['Hiding from Paula', 'Finding the huia', 'Fixing a car'], why: ['"There\'s a sick man up at Carrington Hut… He might be dying." It shows Ricky\'s good heart.'] },
     ],
   },
 
