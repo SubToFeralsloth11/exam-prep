@@ -5,8 +5,22 @@ import { LESSONS, READING_TIPS, READ_ALONG, mathsTerms } from './teach.js';
 import { report } from './report.js';
 import { TRICKS, WORD_TIPS, WORD_HOOKS, READING_TRICKS, LETTER_TRICKS, PSMT_TRICKS } from './tricks.js';
 import { SCI_TOPICS, SCI_KEYS, SCI_LESSONS, SCI_TRICKS, SCI_EXAM_ANSWERS } from './science.js';
-Object.assign(LESSONS, SCI_LESSONS);
-Object.assign(TRICKS, SCI_TRICKS);
+import { ENG_TOPICS, ENG_KEYS, ENG_LESSONS, ENG_TRICKS, ENG_EXAM_ANSWERS } from './english.js';
+import { HASS_TOPICS, HASS_KEYS, HASS_LESSONS, HASS_TRICKS, HASS_EXAM_ANSWERS } from './hass.js';
+Object.assign(LESSONS, SCI_LESSONS, ENG_LESSONS, HASS_LESSONS);
+Object.assign(TRICKS, SCI_TRICKS, ENG_TRICKS, HASS_TRICKS);
+
+// Subjects taught from a topic file (lesson, tips, cards, questions). The key is the subject used for
+// study time, quests and mistakes; `id` matches EXAMS, BOSSES and the '<id>:exam' flashcard pack.
+const COURSES = {
+  science: { id: 'sci', name: 'Science', unit: 'Unit 6 Earth Science', topics: SCI_TOPICS, keys: SCI_KEYS, exam: SCI_EXAM_ANSWERS },
+  english: { id: 'eng', name: 'English', unit: 'Hunt for the Wilderpeople film study', topics: ENG_TOPICS, keys: ENG_KEYS, exam: ENG_EXAM_ANSWERS },
+  hass: { id: 'hass', name: 'HASS', unit: 'Changing Nations', topics: HASS_TOPICS, keys: HASS_KEYS, exam: HASS_EXAM_ANSWERS },
+};
+const courseOf = (topic) => Object.keys(COURSES).find((c) => COURSES[c].topics[topic]);
+const courseById = (id) => Object.keys(COURSES).find((c) => COURSES[c].id === id);
+// Which course a flashcard pack belongs to: a topic name or '<id>:exam'.
+const packCourse = (k) => courseOf(k) || (k.endsWith(':exam') ? courseById(k.slice(0, -5)) : undefined);
 
 // ---------- state ----------
 const KEY = 'examquest.v1';
@@ -15,7 +29,7 @@ const fresh = () => ({ xp: 0, coins: 0, streak: { last: '', n: 0 }, day: {}, mas
 let S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}'));
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 function day() {
-  if (S.day.date !== today()) S.day = { date: today(), correct: 0, german: 0, maths: 0, science: 0, boss: 0, combo: 0, quests: {} };
+  if (S.day.date !== today()) S.day = { date: today(), correct: 0, german: 0, maths: 0, science: 0, english: 0, hass: 0, boss: 0, combo: 0, quests: {} };
   return S.day;
 }
 const level = (xp = S.xp) => Math.floor(Math.sqrt(xp / 60)) + 1;
@@ -89,7 +103,7 @@ const QUESTS = [
   { id: 'q30', text: 'Get 30 answers right', goal: 30, get: (d) => d.correct, coins: 40 },
   { id: 'qger', text: 'Get 20 German answers right', goal: 20, get: (d) => d.german, coins: 30 },
   { id: 'qmat', text: 'Get 20 Maths answers right', goal: 20, get: (d) => d.maths, coins: 30 },
-  { id: 'qsci', text: 'Get 20 Science answers right', goal: 20, get: (d) => d.science || 0, coins: 30 },
+  { id: 'qeh', text: 'Get 20 English or HASS answers right', goal: 20, get: (d) => (d.english || 0) + (d.hass || 0), coins: 30 },
   { id: 'qcombo', text: 'Hit a 10× combo', goal: 10, get: (d) => d.combo, coins: 25 },
   { id: 'qboss', text: 'Fight a boss', goal: 1, get: (d) => d.boss, coins: 25 },
 ];
@@ -112,6 +126,8 @@ const BADGES = [
   ['bmat', 'MA', 'Beat the Maths boss', () => S.bosses.mat?.won],
   ['bpsmt', 'ST', 'Beat the Statistics boss', () => S.bosses.psmt?.won],
   ['bsci', 'SC', 'Beat the Earth Science boss', () => S.bosses.sci?.won],
+  ['beng', 'EN', 'Beat the English boss', () => S.bosses.eng?.won],
+  ['bhass', 'HS', 'Beat the HASS boss', () => S.bosses.hass?.won],
   ['psmt', 'PS', 'Finish the PSMT lab (all 3 questions)', () => [0, 1, 2].every((i) => S.psmt[i]?.done)],
   ['vocab', '50', 'Master 50 German words', () => Object.entries(S.mastery).filter(([k, v]) => k.startsWith('v:') && v >= 3).length >= 50],
 ];
@@ -321,7 +337,7 @@ function answer(input, btn) {
   }
   s.locked = true; s.n++;
   if (res === 'right' || res === 'order' || res === 'accent' || res === 'typo') {
-    s.right++; s.combo++; S.total++; d.correct++; d[q.subject]++;
+    s.right++; s.combo++; S.total++; d.correct++; d[q.subject] = (d[q.subject] || 0) + 1;
     d.combo = Math.max(d.combo, s.combo); S.bestCombo = Math.max(S.bestCombo, s.combo);
     const mult = s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1, coins = q.hinted ? 1 : 2 * mult;
     reward(res === 'right' || res === 'order' ? 10 : res === 'typo' ? 8 : 6, coins);
@@ -476,25 +492,27 @@ function mathsQ(topic, g = TOPICS[topic]()) {
 }
 const mixedMaths = (topics) => () => mathsQ(topics[Math.floor(Math.random() * topics.length)]);
 
-// Science: questions come from science.js. `wrong` makes it multiple choice, `num` a number answer,
-// otherwise a typed answer checked like an English meaning (typos allowed).
-function sciQ(topic, i = Math.floor(Math.random() * SCI_TOPICS[topic].qs.length)) {
-  const x = SCI_TOPICS[topic].qs[i];
+// Science, English and HASS: questions come from the topic files (see COURSES). `wrong` makes it
+// multiple choice, `num` a number answer, otherwise a typed answer checked like an English meaning (typos allowed).
+function courseQ(topic, i) {
+  const subject = courseOf(topic), qs = COURSES[subject].topics[topic].qs;
+  if (i === undefined) i = Math.floor(Math.random() * qs.length);
+  const x = qs[i];
   const choices = x.wrong ? shuffle([x.a, ...x.wrong]) : null;
-  return { redo: { s: [topic, i] }, subject: 'science', topic, prompt: x.q, kind: choices ? 'mc' : 'text', choices, answer: x.a, steps: x.why, num: !!x.num, lenient: !x.num,
-    similar: () => sciQ(topic),
+  return { redo: { s: [topic, i] }, subject, topic, prompt: x.q, kind: choices ? 'mc' : 'text', choices, answer: x.a, steps: x.why, num: !!x.num, lenient: !x.num,
+    similar: () => courseQ(topic),
     check: (inp) => (choices ? (inp === x.a ? 'right' : 'wrong') : x.num ? (checkMaths(inp, x.a) ? 'right' : nearMaths(inp, x.a) ? 'close' : 'wrong') : checkMeaning(inp, [x.a, ...(x.alts || [])])) };
 }
 // Weakest topics come up more often; never the same question twice in a row.
-const sciMix = (topics = SCI_KEYS) => {
+const courseMix = (subject, topics = COURSES[subject].keys) => {
   let last = '';
   return () => {
     const w = topics.map((t) => { const s = S.topic[t]; return s?.seen ? 1.5 - s.right / s.seen : 1.5; });
     for (;;) {
       let r = Math.random() * w.reduce((a, b) => a + b, 0), k = 0;
       while ((r -= w[k]) > 0) k++;
-      const q = sciQ(topics[k]);
-      if (q.prompt !== last || topics.length === 1 && SCI_TOPICS[topics[0]].qs.length === 1) { last = q.prompt; return q; }
+      const q = courseQ(topics[k]);
+      if (q.prompt !== last || topics.length === 1 && COURSES[subject].topics[topics[0]].qs.length === 1) { last = q.prompt; return q; }
     }
   };
 };
@@ -523,10 +541,10 @@ function redoQ(r) {
   if (r.r) { const rd = READINGS.find((x) => x.title === r.r[0]); return rd?.qs[r.r[1]] && readingQ(rd, rd.qs[r.r[1]]); }
   if (r.d) return DRILLS[r.d] && drillQ(r.d, r.g);
   if (r.m) return TOPICS[r.m] && mathsQ(r.m, r.g);
-  if (r.s) return SCI_TOPICS[r.s[0]]?.qs[r.s[1]] && sciQ(r.s[0], r.s[1]);
+  if (r.s) { const c = courseOf(r.s[0]); return c && COURSES[c].topics[r.s[0]].qs[r.s[1]] && courseQ(r.s[0], r.s[1]); }
   return null;
 }
-const subjectOf = (r) => (r.m ? 'maths' : r.s ? 'science' : 'german');
+const subjectOf = (r) => (r.m ? 'maths' : r.s ? courseOf(r.s[0]) : 'german');
 const mistakesOf = (subject) => (S.mistakes || []).filter((m) => subjectOf(m) === subject);
 function mistakesRound(subject) {
   const list = shuffle(subject ? mistakesOf(subject) : [...(S.mistakes || [])]);
@@ -544,7 +562,7 @@ function countdown(due) {
 }
 
 function weakest(prefix) {
-  const names = prefix === 'maths' ? Object.keys(TOPICS) : prefix === 'science' ? SCI_KEYS : [...Object.keys(GERMAN), ...Object.keys(DRILLS)];
+  const names = prefix === 'maths' ? Object.keys(TOPICS) : COURSES[prefix] ? COURSES[prefix].keys : [...Object.keys(GERMAN), ...Object.keys(DRILLS)];
   return names.map((n) => { const t = S.topic[n] || { seen: 0, right: 0 }; return [n, t.seen ? t.right / t.seen : -1, t.seen]; }).sort((a, b) => a[1] - b[1] || a[2] - b[2])[0][0];
 }
 
@@ -553,7 +571,7 @@ function studyCard() {
   const weekSum = week.reduce((x, [, s]) => x + s, 0), all = Object.values(S.study).reduce((x, d) => x + d.total, 0);
   const top = Math.max(60, ...week.map(([, s]) => s));
   return `<div class="card"><div class="row" style="gap:28px">
-      <div><div class="small muted">Today</div><div class="big-num">${mins(t.total)}</div><div class="small muted">German ${mins(t.german)} · Maths ${mins(t.maths)} · Science ${mins(t.science || 0)}</div></div>
+      <div><div class="small muted">Today</div><div class="big-num">${mins(t.total)}</div><div class="small muted">German ${mins(t.german)} · Maths ${mins(t.maths)} · ${Object.entries(COURSES).map(([k, c]) => `${c.name} ${mins(t[k] || 0)}`).join(' · ')}</div></div>
       <div><div class="small muted">Last 7 days</div><div class="big-num">${mins(weekSum)}</div></div>
       <div><div class="small muted">All time</div><div class="big-num">${mins(all)}</div></div></div>
     <div class="studybars">${week.map(([d, s]) => `<div title="${d}: ${mins(s)}"><i style="height:${(s / top) * 100}%"></i><span>${new Date(`${d}T12:00:00+10:00`).toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'Australia/Brisbane' })}</span></div>`).join('')}</div>
@@ -565,7 +583,7 @@ function home() {
   const arcadeOpen = d.correct >= 20;
   view.innerHTML = `
     <h1>G'day Thomas</h1>
-    <p class="muted">Study to earn coins, then spend them on your own games in the Arcade. Content synced from your DayMap, Stile, Education Perfect and Maths OneNote (Science Unit 6 added 18 Nov).</p>
+    <p class="muted">Study to earn coins, then spend them on your own games in the Arcade. Content synced from your DayMap, Stile, Education Perfect and Maths OneNote (English and HASS added 21 Nov).</p>
     ${(() => { const n = nextStep(); return `<div class="card next-step"><div><div class="pill">Do this next</div><h2>${esc(n.title)}</h2><p class="muted">${esc(n.why)}</p></div><button class="btn" id="next-step">Start</button></div>`; })()}
     <div class="grid">${[...EXAMS].sort((a, b) => Date.parse(a.due) - Date.parse(b.due)).map((e) => { const days = (Date.parse(e.due) - Date.now()) / 864e5; return `
       <div class="card exam ${days < 4 ? 'urgent' : ''}"><div class="pill">${e.subject}</div><h3 style="margin-top:6px">${esc(e.name)}</h3>
@@ -581,7 +599,9 @@ function home() {
 
     <h2>Study next</h2>
     <div class="grid">
-      <div class="card click" data-go="sci"><h3>Earth Science exam</h3><p class="muted small">Unit 6 Plate Tectonics. Weakest: ${esc(weakest('science'))}</p><button class="btn">Mixed Science round</button></div>
+      <div class="card click" data-go="hass"><h3>HASS exam (Mon)</h3><p class="muted small">Changing Nations source exam. Weakest: ${esc(weakest('hass'))}</p><button class="btn">Mixed HASS round</button></div>
+      <div class="card click" data-go="eng"><h3>English exam (Mon)</h3><p class="muted small">Hunt for the Wilderpeople paragraphs. Weakest: ${esc(weakest('english'))}</p><button class="btn">Mixed English round</button></div>
+      <div class="card click" data-go="sci"><h3>Earth Science</h3><p class="muted small">Unit 6 Plate Tectonics. Weakest: ${esc(weakest('science'))}</p><button class="btn">Mixed Science round</button></div>
       <div class="card click" data-go="teach"><h3>No idea where to start?</h3><p class="muted small">Lessons that go one small step at a time, before any questions.</p><button class="btn">Teach me</button></div>
       <div class="card click" data-go="ger"><h3>German</h3><p class="muted small">Weakest: ${esc(weakest('german'))}</p><button class="btn">Mixed German round</button></div>
       <div class="card click" data-go="mat"><h3>Maths</h3><p class="muted small">Weakest: ${esc(weakest('maths'))}</p><button class="btn">Mixed Term 4 round</button></div>
@@ -595,7 +615,9 @@ function home() {
     <p class="small muted" style="margin-top:30px">Sources: ${esc(SOURCES)} <button class="btn alt" id="reset" style="padding:4px 10px;font-size:12px">Reset progress</button></p>`;
   view.querySelector('[data-go=ger]').onclick = () => play({ title: 'Mixed German', next: germanMix(), limit: 20 });
   view.querySelector('[data-go=mat]').onclick = () => play({ title: 'Mixed Maths', next: mixedMaths(Object.keys(TOPICS)), limit: 20 });
-  view.querySelector('[data-go=sci]').onclick = () => play({ title: 'Mixed Earth Science', next: sciMix(), limit: 20 });
+  view.querySelector('[data-go=sci]').onclick = () => play({ title: 'Mixed Earth Science', next: courseMix('science'), limit: 20 });
+  view.querySelector('[data-go=eng]').onclick = () => play({ title: 'Mixed English', next: courseMix('english'), limit: 20 });
+  view.querySelector('[data-go=hass]').onclick = () => play({ title: 'Mixed HASS', next: courseMix('hass'), limit: 20 });
   view.querySelector('[data-go=psmt]').onclick = () => (location.hash = '#psmt');
   view.querySelector('[data-go=report]').onclick = () => (location.hash = '#report');
   view.querySelector('[data-go=teach]').onclick = () => (location.hash = '#teach');
@@ -605,12 +627,18 @@ function home() {
 }
 
 // The single most useful thing to do now: work for the nearest exam first (new lessons before
-// practice), then saved mistakes, then flashcards you missed, then your weakest topic.
+// practice), then saved mistakes, then flashcards you missed, then your weakest topic. When several
+// course exams are within 4 days, their lessons come first, from whichever course you're furthest behind in.
 function nextStep() {
   const soon = EXAMS.filter((e) => Date.parse(e.due) > Date.now()).sort((a, b) => Date.parse(a.due) - Date.parse(b.due));
-  const order = [...new Set([...soon.map((e) => e.id), 'sci', 'ger', 'mat'])];
-  const dueCards = (german) => Object.keys(S.cardsAgain || {}).find((k) => (/^(words|letter):/.test(k) || k === 'reading' || !!DRILLS[k]) === german && studyPack(k).cards);
+  const order = [...new Set([...soon.map((e) => e.id), 'hass', 'eng', 'sci', 'ger', 'mat'])];
+  const dueCards = (german) => Object.keys(S.cardsAgain || {}).find((k) => (/^(words|letter):/.test(k) || k === 'reading' || !!DRILLS[k]) === german && !packCourse(k) && studyPack(k).cards);
   const cardTitle = (k) => studyPack(k).title;
+  const close = soon.filter((e) => courseById(e.id) && Date.parse(e.due) - Date.now() < 4 * 864e5).map((e) => ({ c: COURSES[courseById(e.id)], e }));
+  const lag = close.map((x) => ({ ...x, done: x.c.keys.filter(taught).length / x.c.keys.length })).filter((x) => x.done < 1).sort((a, b) => a.done - b.done)[0];
+  if (lag) { const t = lag.c.keys.find((x) => !taught(x)); return { title: `Learn: ${t}`, why: `${lag.c.name}: ${lag.c.unit}, one step at a time, then 5 questions. The ${lag.c.name} exam is in ${countdown(lag.e.due)}.`, run: () => lesson(t) }; }
+  const unseen = close.find((x) => !S.lessons[`cards:${x.c.id}:exam`]);
+  if (unseen) { const { id, name } = unseen.c; return { title: `${name} exam answers: practise the long questions`, why: `Say your answer, then flip to compare with a full-marks answer. The ${name} exam is in ${countdown(unseen.e.due)}.`, run: () => { S.lessons[`cards:${id}:exam`] = 1; save(); flashcards(`${id}:exam`); } }; }
   for (const id of order) {
     const exam = EXAMS.find((e) => e.id === id), when = exam ? ` The ${exam.subject} ${id === 'psmt' ? 'PSMT' : 'exam'} is ${countdown(exam.due).toLowerCase() === 'done' ? 'done' : `in ${countdown(exam.due)}`}.` : '';
     if (id === 'ger') {
@@ -628,13 +656,15 @@ function nextStep() {
       return { title: `Practise a letter: ${READINGS[ri2].title}`, why: `Read the key words, then answer the questions.${when}`, run: () => { S.readNext = ri2 + 1; save(); readingWords(ri2); } };
     }
     if (id === 'psmt' && SURVEY_QUESTIONS.some((_, i) => !S.psmt[i]?.done)) return { title: 'PSMT lab: check your calculations', why: `Get every survey question checked before you write the report.${when}`, run: () => (location.hash = '#psmt') };
-    if (id === 'sci') {
-      const t = SCI_KEYS.find((x) => !taught(x)); if (t) return { title: `Learn: ${t}`, why: `Science Unit 6, one step at a time, then 5 questions.${when}`, run: () => lesson(t) };
-      if (mistakesOf('science').length) return { title: `Redo your science mistakes (${mistakesOf('science').length})`, why: `The exact questions you got wrong.${when}`, run: () => mistakesRound('science') };
-      const k = Object.keys(S.cardsAgain || {}).find((x) => (SCI_TOPICS[x] || x === 'sci:exam') && studyPack(x).cards);
+    const cn = courseById(id);
+    if (cn) {
+      const c = COURSES[cn];
+      const t = c.keys.find((x) => !taught(x)); if (t) return { title: `Learn: ${t}`, why: `${c.name}: ${c.unit}, one step at a time, then 5 questions.${when}`, run: () => lesson(t) };
+      if (mistakesOf(cn).length) return { title: `Redo your ${c.name} mistakes (${mistakesOf(cn).length})`, why: `The exact questions you got wrong.${when}`, run: () => mistakesRound(cn) };
+      const k = Object.keys(S.cardsAgain || {}).find((x) => packCourse(x) === cn && studyPack(x).cards);
       if (k) return { title: `Flashcards: ${studyPack(k).title}`, why: `You marked some of these "Again" last time.${when}`, run: () => flashcards(k) };
-      if (!S.lessons['cards:sci:exam']) return { title: 'Exam answers: practise the long questions', why: `Say your answer, then flip to compare with a full-marks answer.${when}`, run: () => { S.lessons['cards:sci:exam'] = 1; save(); flashcards('sci:exam'); } };
-      const w = weakest('science'); return { title: `Practise: ${w}`, why: `Your weakest science topic right now.${when}`, run: () => play({ title: w, next: () => sciQ(w), limit: 12 }) };
+      if (!S.lessons[`cards:${id}:exam`]) return { title: `${c.name} exam answers: practise the long questions`, why: `Say your answer, then flip to compare with a full-marks answer.${when}`, run: () => { S.lessons[`cards:${id}:exam`] = 1; save(); flashcards(`${id}:exam`); } };
+      const w = weakest(cn); return { title: `Practise: ${w}`, why: `Your weakest ${c.name} topic right now.${when}`, run: () => play({ title: w, next: () => courseQ(w), limit: 12 }) };
     }
     if (id === 'mat') {
       const t = Object.keys(TOPICS).find((x) => !taught(x)); if (t) return { title: `Learn: ${t}`, why: `A short lesson, one step at a time, then 5 questions.${when}`, run: () => lesson(t) };
@@ -734,22 +764,29 @@ function maths() {
   view.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => play({ title: b.dataset.t, next: () => mathsQ(b.dataset.t), limit: 12 })));
 }
 
-function science() {
+// One page per course: topics in order, each with Teach, Tips & tricks, Flashcards and Practise.
+function coursePage(cn, title, intro) {
+  const c = COURSES[cn], mist = mistakesOf(cn).length;
   view.innerHTML = `
-    <h1>Science – Unit 6: Earth Science (Plate Tectonics)</h1>
-    <p class="muted">Everything from your Stile unit: theories of plate tectonics, plate movement, plate boundaries, the two practicals, and the volcanoes, hotspots, tsunamis and earthquakes sessions, plus the three check-ins. Exam: <b>SA5_8_Science_Earth_Exam</b> (DayMap, Ms Woolmer).
-      Do each topic in order: <b>Teach</b>, then <b>Flashcards</b>, then <b>Practise</b>.</p>
-    <div class="row"><button class="btn" id="mix">Mixed exam round (25)</button><button class="btn alt" id="exam">Exam answers (long questions)</button>${mistakesOf('science').length ? `<button class="btn alt" id="mist">Redo my mistakes (${mistakesOf('science').length})</button>` : ''}</div>
-    <div class="grid" style="margin-top:16px">${SCI_KEYS.map((n) => { const t = S.topic[n]; const p = t ? Math.round((t.right / t.seen) * 100) : 0; return `
-      <div class="card"><h3>${tick(n)}${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'} · ${SCI_TOPICS[n].qs.length} questions</p>
+    <h1>${title}</h1>
+    <p class="muted">${intro} Do each topic in order: <b>Teach</b>, then <b>Flashcards</b>, then <b>Practise</b>.</p>
+    <div class="row"><button class="btn" id="mix">Mixed exam round (25)</button><button class="btn alt" id="exam">Exam answers (long questions)</button>${mist ? `<button class="btn alt" id="mist">Redo my mistakes (${mist})</button>` : ''}</div>
+    <div class="grid" style="margin-top:16px">${c.keys.map((n) => { const t = S.topic[n]; const p = t ? Math.round((t.right / t.seen) * 100) : 0; return `
+      <div class="card"><h3>${tick(n)}${esc(n)}</h3><div class="bar"><i style="width:${p}%;background:${p >= 80 ? 'var(--good)' : p >= 50 ? 'var(--warn)' : 'var(--bad)'}"></i></div><p class="small muted">${t ? `${t.right}/${t.seen} right (${p}%)` : 'Not started'} · ${c.topics[n].qs.length} questions</p>
       <div class="row"><button class="btn alt" data-teach="${esc(n)}">Teach</button>${studyButtons(n)}<button class="btn" data-s="${esc(n)}">Practise</button></div></div>`; }).join('')}</div>`;
-  $('#mix').onclick = () => play({ title: 'Earth Science mix', next: sciMix(), limit: 25 });
-  $('#exam').onclick = () => flashcards('sci:exam');
-  $('#mist') && ($('#mist').onclick = () => mistakesRound('science'));
+  $('#mix').onclick = () => play({ title: `${c.name} mix`, next: courseMix(cn), limit: 25 });
+  $('#exam').onclick = () => flashcards(`${c.id}:exam`);
+  $('#mist') && ($('#mist').onclick = () => mistakesRound(cn));
   view.querySelectorAll('[data-teach]').forEach((b) => (b.onclick = () => lesson(b.dataset.teach)));
   bindStudyButtons();
-  view.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => play({ title: b.dataset.s, next: () => sciQ(b.dataset.s), limit: 12 })));
+  view.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => play({ title: b.dataset.s, next: () => courseQ(b.dataset.s), limit: 12 })));
 }
+const science = () => coursePage('science', 'Science – Unit 6: Earth Science (Plate Tectonics)',
+  'Everything from your Stile unit: theories of plate tectonics, plate movement, plate boundaries, the two practicals, and the volcanoes, hotspots, tsunamis and earthquakes sessions, plus the three check-ins. Exam: <b>SA5_8_Science_Earth_Exam</b> (DayMap, Ms Woolmer).');
+const english = () => coursePage('english', 'English – Unit 4: Film Study (<i>Hunt for the Wilderpeople</i>)',
+  'Everything from your Stile unit (lessons 1–5, Teenagers, Family, Authority figures, haikus) and the exam sheet. Exam: <b>SA4_8_English_Exam</b> (DayMap, Mrs Stephenson), Monday: two analytical paragraphs (400–600 words, 60 minutes) on ONE thesis (Teenagers, Authority figures or Family), using dialogue AND film techniques. <b>Exam answers</b> has full model paragraphs for every thesis.');
+const hass = () => coursePage('hass', 'HASS – Changing Nations (Geography)',
+  'Everything from your Stile unit: urbanisation, where Australians live, Australia vs the USA, migration, Asia\'s cities, liveable cities and urban renewal, and the gentrification of West End. Exam: <b>Year 8 Changing Nations Exam</b> (DayMap, Mr Kersnovske), Monday 9:00 am: short-response questions on sources (maps, graphs, tables). Learn <b>Source skills</b> (IPQE, BOLTSS) first.');
 
 // ---------- tips & tricks, flashcards ----------
 // Tips & tricks only teach: memory tricks plus a "Do this now" task (write it, say it, draw it). No questions.
@@ -760,7 +797,7 @@ const asCards = (tips) => tips.map((x) => ({ t: x.t, s: x.s, html: doBox(x.do) }
 function studyPack(key) {
   if (key === 'reading') return { title: 'Reading German letters', tips: READING_TRICKS.tips, cards: READING_TRICKS.cards };
   if (key === 'psmt') return { title: 'PSMT: comparing data', tips: PSMT_TRICKS.tips, cards: PSMT_TRICKS.cards };
-  if (key === 'sci:exam') return { title: 'Science exam answers', tips: [], cards: SCI_EXAM_ANSWERS };
+  if (packCourse(key) && key.endsWith(':exam')) { const c = COURSES[packCourse(key)]; return { title: `${c.name} exam answers`, tips: [], cards: c.exam }; }
   if (key.startsWith('letter:')) {
     const r = READINGS[Number(key.slice(7))];
     const words = [...new Map((READ_ALONG[r.title] || []).flatMap((c) => c[2]).map((w) => [w[0], w])).values()];
@@ -803,7 +840,7 @@ function flashcards(key) {
   const queue = [...shuffle(p.cards.filter((c) => saved.has(c[0]))), ...shuffle(p.cards.filter((c) => !saved.has(c[0])))].map((c) => [...c]);
   const total = queue.length; let known = 0, flipped = false;
   const german = /^(words|letter):/.test(key) || key === 'reading' || !!DRILLS[key];
-  studying = german ? 'german' : SCI_TOPICS[key] || key === 'sci:exam' ? 'science' : 'maths';
+  studying = german ? 'german' : packCourse(key) || 'maths';
   const keep = () => { S.cardsAgain[key] = [...saved]; if (!saved.size) delete S.cardsAgain[key]; save(); };
   const draw = () => {
     if (!queue.length) {
@@ -816,7 +853,7 @@ function flashcards(key) {
     const [front, back] = queue[0];
     view.innerHTML = `<div class="play"><a href="#" id="quit" class="quit">Exit</a><span class="crumb">${esc(p.title)}: flashcards</span>
       <p class="muted small" style="margin-top:10px">${known} of ${total} known.${saved.has(front) ? ' <b style="color:var(--warn)">You missed this one last time.</b>' : ''} Say the answer in your head, then flip.</p><div class="bar"><i style="width:${(known / total) * 100}%"></i></div>
-      <div class="flash"><div class="face${flipped ? ' back' : ''}" id="card">${esc(flipped ? back : front).replace(/\n/g, '<br>')}</div></div>
+      <div class="flash"><div class="face${flipped ? ' back' : ''}${(flipped ? back : front).length > 220 ? ' long' : ''}" id="card">${esc(flipped ? back : front).replace(/\n/g, '<br>')}</div></div>
       <div class="row" style="margin-top:12px;justify-content:center">${flipped
         ? '<button class="btn alt" id="again">Again (1)</button><button class="btn" id="got">Got it (2)</button>'
         : `<button class="btn" id="flip">Flip (Space)</button>${german ? '<button class="btn alt" id="hear">Hear it (H)</button>' : ''}`}</div></div>`;
@@ -846,7 +883,7 @@ function markTaught(key) {
 
 // Steps through cards one line at a time. Enter / → goes forward, ← goes back.
 function runCards(title, cards, onDone) {
-  studying = SCI_KEYS.some((k) => title.startsWith(k)) ? 'science' : title.includes('German') || !Object.keys(TOPICS).some((t) => title.includes(t)) ? 'german' : 'maths';
+  studying = Object.keys(COURSES).find((cn) => COURSES[cn].keys.some((k) => title.startsWith(k))) || (title.includes('German') || !Object.keys(TOPICS).some((t) => title.includes(t)) ? 'german' : 'maths');
   let c = 0, l = 0;
   const fwd = () => { if (l + 1 < cards[c].s.length) l++; else if (c + 1 < cards.length) { c++; l = 0; } else { document.onkeydown = null; return onDone(); } draw(); };
   const back = () => { if (l > 0) l--; else if (c > 0) { c--; l = cards[c].s.length - 1; } draw(); };
@@ -867,7 +904,7 @@ function runCards(title, cards, onDone) {
 
 function practiceFor(key) {
   if (TOPICS[key]) return () => mathsQ(key);
-  if (SCI_TOPICS[key]) return () => sciQ(key);
+  if (courseOf(key)) return () => courseQ(key);
   if (DRILLS[key]) return drillNext(key);
   return null;
 }
@@ -973,8 +1010,8 @@ function teach() {
     <div class="grid">${Object.keys(DRILLS).map((d) => item(d, d, `data-teach="${esc(d)}"`, d)).join('')}</div>
     <h2>German: word lists</h2>
     <div class="grid">${Object.keys(GERMAN).map((l) => item(`words:${l}`, l, `data-words="${esc(l)}"`, `words:${l}`)).join('')}</div>
-    <h2>Science: Unit 6 Earth Science</h2>
-    <div class="grid">${SCI_KEYS.map((t) => item(t, t, `data-teach="${esc(t)}"`, t)).join('')}</div>
+    ${Object.values(COURSES).map((c) => `<h2>${c.name}: ${c.unit}</h2>
+    <div class="grid">${c.keys.map((t) => item(t, t, `data-teach="${esc(t)}"`, t)).join('')}</div>`).join('')}
     <h2>Maths: PSMT</h2>
     <div class="grid"><div class="card"><h3>PSMT: comparing data</h3><p class="small muted">Centre, spread and shape for your report.</p><div class="row">${studyButtons('psmt')}</div></div></div>
     <h2>Maths</h2>
@@ -1090,7 +1127,9 @@ const BOSSES = [
   { id: 'ger', name: 'Der Geburtstagsdrache', icon: 'GD', hp: 15, seconds: 600, title: 'German exam boss', make: germanMix },
   { id: 'psmt', name: 'The Skewed Statistic', icon: 'SS', hp: 12, seconds: 480, title: 'Statistics boss', make: () => mixedMaths(Object.keys(TOPICS).filter((n) => n.startsWith('8'))) },
   { id: 'mat', name: 'The Percentage Titan', icon: 'PT', hp: 18, seconds: 900, title: 'Term 4 Maths exam boss', make: () => mixedMaths(Object.keys(TOPICS)) },
-  { id: 'sci', name: 'The Tectonic Titan', icon: 'TT', hp: 20, seconds: 900, title: 'Earth Science exam boss', make: () => sciMix() },
+  { id: 'sci', name: 'The Tectonic Titan', icon: 'TT', hp: 20, seconds: 900, title: 'Earth Science exam boss', make: () => courseMix('science') },
+  { id: 'eng', name: 'The Wilderpeople Hunter', icon: 'WH', hp: 18, seconds: 900, title: 'English film study boss', make: () => courseMix('english') },
+  { id: 'hass', name: 'The Megacity', icon: 'MC', hp: 18, seconds: 900, title: 'HASS Changing Nations boss', make: () => courseMix('hass') },
 ];
 function bosses() {
   view.innerHTML = `<h1>Boss fights</h1><p class="muted">Timed mock exams. Every right answer hits the boss; 3 wrong answers or running out of time and you lose. First win: +200 coins and a badge.</p>
@@ -1248,7 +1287,7 @@ function launch(game) {
 
 // ---------- router ----------
 function reportPage() { studying = 'maths'; report({ view, esc, toast }); }
-const ROUTES = { home, teach, german, maths, science, psmt, report: reportPage, boss: bosses, arcade };
+const ROUTES = { home, teach, german, maths, science, english, hass, psmt, report: reportPage, boss: bosses, arcade };
 function route() {
   studying = null;
   if (session) { clearInterval(session.timer); session = null; }

@@ -1,7 +1,7 @@
 // Content pulled 2026-11-08 from DayMap, Stile, Education Perfect and the Year 8 Maths OneNote (Mr Hives).
 // Regenerate by re-running the sync; do not hand-edit the word lists.
 
-export const SOURCES = 'DayMap tasks, Stile "Unit 8 – Was feiert man in Deutschland?", Stile "Unit 6: Earth Science - Plate Tectonics", Education Perfect 8E German tasks, OneNote "2026 – Year 8 Maths" Term 4 planner and pages, and your class survey spreadsheet.';
+export const SOURCES = 'DayMap tasks, Stile "Unit 8 – Was feiert man in Deutschland?", Stile "Unit 6: Earth Science - Plate Tectonics", Stile "2026 8 ENG Unit 4 - Film Study", Stile "2026 8HSS T4 Changing Nations", Education Perfect 8E German tasks, OneNote "2026 – Year 8 Maths" Term 4 planner and pages, and your class survey spreadsheet.';
 
 // Brisbane time (UTC+10). `note` carries what the teacher wrote on DayMap.
 export const EXAMS = [
@@ -9,6 +9,8 @@ export const EXAMS = [
   { id: 'ger', subject: 'German', name: 'German exam – reading comprehension (Unit 8 Geburtstag & Feiern)', due: '2026-11-11T09:00:00+10:00', note: 'DayMap: "Exam is scheduled for Week 8. Please discuss with your teacher for more precise information." Week 8 lessons: Wed 25 Nov & Thu 26 Nov. Study as if it is 11 Nov.' },
   { id: 'mat', subject: 'Maths', name: 'Maths exam – Term 4 (percentages, ratios, rates, statistics)', due: '2026-11-25T14:10:00+10:00', note: 'Term 4 planner: exam in Week 8.' },
   { id: 'sci', subject: 'Science', name: 'Science exam – Unit 6 Earth Science (plate tectonics)', due: '2026-11-19T11:40:00+10:00', note: 'DayMap: SA5_8_Science_Earth_Exam (Ms Woolmer), DayMap due date Fri 20 Nov 2:33 pm. Sitting it in Thursday\'s science lesson.' },
+  { id: 'hass', subject: 'HASS', name: 'HASS exam – Changing Nations (short-response source exam)', due: '2026-11-23T09:00:00+10:00', note: 'DayMap: "Year 8 Changing Nations Exam" (Mr Kersnovske), due Mon 23 Nov 9:00 am. Marked on explaining distributions, analysing data for patterns and trends, and using geographical terms and sources.' },
+  { id: 'eng', subject: 'English', name: 'English exam – Hunt for the Wilderpeople analytical paragraphs', due: '2026-11-23T23:59:00+10:00', note: 'DayMap: SA4_8_English_Exam (Mrs Stephenson), due Mon 23 Nov 11:59 pm. Seen task, 60 minutes: two analytical paragraphs (400–600 words) on one thesis, using dialogue and film techniques.' },
 ];
 
 export const GERMAN = {
