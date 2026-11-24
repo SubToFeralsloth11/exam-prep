@@ -7,7 +7,7 @@ import { stats } from './maths.js';
 
 const KEY = 'examquest.report.v1';
 const DUE = new Date('2026-11-13T15:00:00+10:00');
-const TEMPLATE = 'assets/psmt-final-template.docx';
+import { TEMPLATE_B64 } from './template.js';
 const QUESTIONS = ['How many hours do you sleep in a day?', 'How much money do you have in your bank account?', 'How many siblings do you have in your family?'];
 const UNITS = [' hours', '', ' siblings'];
 const GROUPS = [['8E (your class)', (c) => c === '8E'], ['8G (other class)', (c) => c === '8G'], ['All Year 8s', () => true]];
@@ -238,7 +238,7 @@ export function report(c) {
   $('#rp-copy').onclick = () => navigator.clipboard.writeText(plainText()).then(() => c.toast('All answers copied'), () => c.toast('Copy failed: use the backup download'));
   $('#rp-docx').onclick = async () => {
     try {
-      const st = groupStats(R.q), tpl = new Uint8Array(await (await fetch(TEMPLATE)).arrayBuffer());
+      const st = groupStats(R.q), tpl = Uint8Array.from(atob(TEMPLATE_B64), (c) => c.charCodeAt(0));
       const imgs = R.hist ? await Promise.all(st.map(async (s) => ({ title: `${s.g}: ${SURVEY_QUESTIONS[R.q]}`, png: await histPng(s.xs, R.q) }))) : [];
       download(new Blob([await buildDocx(tpl, R, imgs)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `3.8 Maths Assignment (Data) Final submission - ${R.name || 'me'}.docx`);
       c.toast('Word document downloaded');

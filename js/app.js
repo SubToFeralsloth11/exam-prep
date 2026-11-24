@@ -1307,3 +1307,14 @@ function route() {
 }
 addEventListener('hashchange', route);
 day(); route();
+
+// Five quick clicks on the logo open HomeHub (only when served by HomeHub over http).
+{
+  let clicks = [];
+  document.querySelector('.brand')?.addEventListener('click', (e) => {
+    const now = Date.now();
+    clicks = clicks.filter((t) => now - t < 1500);
+    clicks.push(now);
+    if (clicks.length >= 5 && location.protocol.startsWith('http')) { e.preventDefault(); location.href = '/hub'; }
+  });
+}
